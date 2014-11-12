@@ -26,9 +26,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChatConnector {
 
 //    public static String url = "http://api-rc.sender.mobi/";
-    public static String url = "http://dev.sender.mobi/";
-//    public static String url = "http://dev-2.sender.mobi/";
+//    public static String url = "http://dev.sender.mobi/";
+    public static String url = "http://dev-2.sender.mobi/";
 //    public static final String CODE_OK = "0";
+    public static final String CODE_NOT_REGISTERED = "4";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
     private boolean alive = false;
     private boolean isReconnectProcess = false;
@@ -112,11 +113,6 @@ public class ChatConnector {
                         resp = EntityUtils.toString(httpClient.execute(post).getEntity());
                     }
                     Log.v(TAG, "<------ " + resp + " (" + request.getId() + ")");
-//                    JSONObject jo = new JSONObject(resp);
-//                    String code = jo.optString("code");
-//                    if (!CODE_OK.equals(code)) {
-//                        throw new Exception(jo.has("msg") ? jo.optString("msg") : "invalid response: " + resp);
-//                    }
                     request.response(resp);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -215,6 +211,11 @@ public class ChatConnector {
                     post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
                     HttpResponse response = new DefaultHttpClient().execute(post);
                     Log.v(TAG, "[stream] deliv of msg ref=" + jo.optString("ref") + " sended" + " response = " + EntityUtils.toString(response.getEntity()));
+                }
+                String code = jo.optString("code");
+                if (CODE_NOT_REGISTERED.equals(code)) {
+                    reg();
+                    return false;
                 }
                 listener.onData(jo);
             } catch (JSONException e) {

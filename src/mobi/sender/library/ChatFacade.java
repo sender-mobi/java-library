@@ -1,14 +1,8 @@
 package mobi.sender.library;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.net.URLEncoder;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,7 +22,7 @@ public class ChatFacade {
     public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
     public static final String CLASS_READ = "read.statusrobot.sender";
     public static final String CLASS_DELIV = "deliv.statusrobot.sender";
-    public static final String CLASS_IS_AUTH = "isauth.auth.sender";
+    public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
     public static final String CLASS_SYNC_CONTACT = "sync.contactrobot.sender";
     public static final String CLASS_CHAT_CREATE = "create.chatrobot.sender";
     public static final String CLASS_PHONE_AUTH = "phone.auth.sender";
@@ -41,12 +35,10 @@ public class ChatFacade {
     public static final String CLASS_CHECK_ONLINE = "check.status.sender";
 
     private ChatConnector cc;
-    private String TAG;
     private ChatConnector.SenderListener listener;
 
     public ChatFacade(String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
         this.cc = new ChatConnector(sid, imei, devName, devType, number, listener);
-        this.TAG = "["+number+"]";
     }
 
     public void checkAuth() {
@@ -67,6 +59,14 @@ public class ChatFacade {
         try {
             JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void send(String urlPart, JSONObject data) {
+        try {
+            cc.send(new SenderRequest(urlPart, data));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -179,8 +179,10 @@ public class ChatFacade {
 
     public void sendToken(final String token) {
         try {
-            JSONObject jo = getForm2Send(new JSONObject("{token:\"" + URLEncoder.encode(token, "UTF-8") + "\"}"), CLASS_PUSH, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", jo));
+            JSONObject rjo = new JSONObject();
+            rjo.put("token", token);
+            rjo.put("sid", cc.getSid());
+            send("token", rjo);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -211,11 +213,7 @@ public class ChatFacade {
             JSONObject rjo = new JSONObject();
             rjo.put("chatId", chatId);
             rjo.put("sid", cc.getSid());
-            HttpPost post = new HttpPost(cc.getUrl() + "typing");
-            post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
-            Log.v(TAG, "========> "+rjo.toString());
-            HttpResponse response = new DefaultHttpClient().execute(post);
-            Log.v(TAG, "<-------- "+response);
+            send("typing", rjo);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -225,11 +223,7 @@ public class ChatFacade {
         try {
             JSONObject rjo = new JSONObject();
             rjo.put("sid", cc.getSid());
-            HttpPost post = new HttpPost(cc.getUrl() + "i_am_online");
-            post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
-            Log.v(TAG, "========> "+rjo.toString());
-            HttpResponse response = new DefaultHttpClient().execute(post);
-            Log.v(TAG, "<-------- "+response);
+            send("i_am_online", rjo);
         } catch (Exception e) {
             e.printStackTrace();
         }
