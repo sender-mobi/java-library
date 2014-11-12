@@ -8,6 +8,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URLEncoder;
+
 /**
  * Created with IntelliJ IDEA.
  * User: vp
@@ -16,6 +18,27 @@ import org.json.JSONObject;
  */
 public class ChatFacade {
 
+    public static final String CLASS_TEXT_ROUTE = "text.routerobot.sender";
+    public static final String CLASS_FILE_ROUTE = "file.routerobot.sender";
+    public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
+    public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
+    public static final String CLASS_INFO_USER = "info.userrobot.sender";
+    public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
+    public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
+    public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
+    public static final String CLASS_READ = "read.statusrobot.sender";
+    public static final String CLASS_DELIV = "deliv.statusrobot.sender";
+    public static final String CLASS_IS_AUTH = "isauth.auth.sender";
+    public static final String CLASS_SYNC_CONTACT = "sync.contactrobot.sender";
+    public static final String CLASS_CHAT_CREATE = "create.chatrobot.sender";
+    public static final String CLASS_PHONE_AUTH = "phone.auth.sender";
+    public static final String CLASS_OTP_AUTH = "otp.auth.sender";
+    public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
+    public static final String CLASS_GET_SELF_INFO = ".getSelfInfo.sender";
+    public static final String CLASS_SET_SELF_INFO = ".setSelfInfo.sender";
+    public static final String CLASS_SET_CHAT = "set.chatrobot.sender";
+    public static final String CLASS_PUSH = "push.pushrobot.sender";
+    public static final String CLASS_CHECK_ONLINE = "check.status.sender";
 
     private ChatConnector cc;
     private String TAG;
@@ -28,7 +51,7 @@ public class ChatFacade {
 
     public void checkAuth() {
         try {
-            JSONObject form2Send = getForm2Send(null, "isauth.authrobot.sender", ChatConnector.senderChatId);
+            JSONObject form2Send = getForm2Send(null, CLASS_IS_AUTH, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -53,7 +76,7 @@ public class ChatFacade {
         try {
             JSONObject jo = new JSONObject();
             jo.put("contacts", contacts);
-            JSONObject form2Send = getForm2Send(jo, "sync.contactrobot.sender", ChatConnector.senderChatId);
+            JSONObject form2Send = getForm2Send(jo, CLASS_SYNC_CONTACT, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -96,7 +119,7 @@ public class ChatFacade {
             JSONObject model = new JSONObject();
             model.put("users", users);
             model.put("chatId", chatId);
-            JSONObject form2Send = getForm2Send(model, "set.chatrobot.sender", ChatConnector.senderChatId);
+            JSONObject form2Send = getForm2Send(model, CLASS_SET_CHAT, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -104,11 +127,11 @@ public class ChatFacade {
         }
     }
 
-    public void sendMessage(final String text, final String chatId) {
+    public void sendMessage(final String text, final String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("text", text);
-            JSONObject form2Send = getForm2Send(model, "text.routerobot.sender", chatId);
+            JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send
                     , new SenderRequest.HttpDataListener() {
@@ -119,9 +142,9 @@ public class ChatFacade {
                         JSONObject jo = new JSONObject(resp);
                         String serverId = jo.optString("ref");
                         long time = jo.optLong("time");
-                        Log.v(TAG, "Message sended. ServerId=" + serverId + ", time=" + time);
+                        sml.onSuccess(serverId, time);
                     } catch (JSONException e) {
-                        e.printStackTrace();
+                        sml.onError(e);
                     }
                 }
 
@@ -135,11 +158,39 @@ public class ChatFacade {
         }
     }
 
+    public void getUserData() {
+        getUserData(null);
+    }
+
+    public void getUserData(final String userId) {
+        try {
+            JSONObject jo;
+            if (userId == null) {
+                jo = getForm2Send(new JSONObject(), CLASS_INFO_USER, ChatConnector.senderChatId);
+            } else {
+                jo = getForm2Send(new JSONObject("{userId:" + userId + "}"), CLASS_INFO_USER, ChatConnector.senderChatId);
+            }
+
+            cc.send(new SenderRequest("fsubmit", jo));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendToken(final String token) {
+        try {
+            JSONObject jo = getForm2Send(new JSONObject("{token:\"" + URLEncoder.encode(token, "UTF-8") + "\"}"), CLASS_PUSH, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", jo));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void sendRead(final String packetId, final String chatId) {
         try {
             JSONObject model = new JSONObject();
             model.put("packetId", packetId);
-            JSONObject form2Send = getForm2Send(model, "read.statusrobot.sender", chatId);
+            JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -148,7 +199,7 @@ public class ChatFacade {
 
     public void getChatInfo(String chatId) {
         try {
-            JSONObject jo = getForm2Send(null, "info.chatrobot.sender", chatId);
+            JSONObject jo = getForm2Send(null, CLASS_INFO_CHAT, chatId);
             cc.send(new SenderRequest("fsubmit", jo));
         } catch (Exception e) {
             e.printStackTrace();
@@ -191,7 +242,7 @@ public class ChatFacade {
             JSONArray arr = new JSONArray();
             for (String s : userIdS) arr.put(s);
             model.put("userIds", arr);
-            JSONObject form2Send = getForm2Send(model, "check.status.sender", ChatConnector.senderChatId);
+            JSONObject form2Send = getForm2Send(model, CLASS_CHECK_ONLINE, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -211,8 +262,12 @@ public class ChatFacade {
     }
 
     public void uploadFile2Server(final byte[] file, final UploadFileListener ufl) {
+        uploadFile2Server(file, "png", ufl);
+    }
+
+    public void uploadFile2Server(final byte[] file, String type, final UploadFileListener ufl) {
         try {
-            cc.send(new SenderRequest("upload?filetype=png" + "&sid=" + cc.getSid(),
+            cc.send(new SenderRequest("upload?filetype=" + type + "&sid=" + cc.getSid(),
                     file,
                     new SenderRequest.HttpDataListener() {
 
@@ -251,11 +306,46 @@ public class ChatFacade {
         }
     }
 
+    public void setMySelfData(String name, String iconUrl, String description) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("name", name);
+            model.put("photo", iconUrl);
+            model.put("description", description);
+            JSONObject jo = getForm2Send(model,CLASS_SET_SELF_INFO, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", jo));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getMySelfData() {
+        try {
+            JSONObject jo = getForm2Send(new JSONObject(), CLASS_GET_SELF_INFO, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", jo));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isConnected() {
+        return cc.isAlive();
+    }
+
+    public void stop() {
+        cc.disconnect();
+    }
+
     public interface UploadFileListener {
         public void onSuccess(String url);
 
         public void onError(Exception e);
     }
 
+    public interface SendMsgListener {
+        public void onSuccess(String serverId, long time);
+
+        public void onError(Exception e);
+    }
 
 }
