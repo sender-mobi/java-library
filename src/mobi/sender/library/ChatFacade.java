@@ -16,7 +16,7 @@ public class ChatFacade {
     public static final String CLASS_FILE_ROUTE = "file.routerobot.sender";
     public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
-    public static final String CLASS_INFO_USER = "info.userrobot.sender";
+    public static final String CLASS_INFO_USER = ".getUserInfo.sender";
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
     public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
     public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
@@ -24,7 +24,6 @@ public class ChatFacade {
     public static final String CLASS_DELIV = "deliv.statusrobot.sender";
     public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
     public static final String CLASS_SYNC_CONTACT = "sync.contactrobot.sender";
-    public static final String CLASS_CHAT_CREATE = "create.chatrobot.sender";
     public static final String CLASS_PHONE_AUTH = "phone.auth.sender";
     public static final String CLASS_OTP_AUTH = "otp.auth.sender";
     public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
@@ -33,6 +32,11 @@ public class ChatFacade {
     public static final String CLASS_SET_CHAT = "set.chatrobot.sender";
     public static final String CLASS_PUSH = "push.pushrobot.sender";
     public static final String CLASS_CHECK_ONLINE = "check.status.sender";
+    public static final String CLASS_WALLET = ".wallet.sender";
+    public static final String CLASS_P2P = ".p2p.sender";
+    public static final String CLASS_NOTIFY_ADD_YOU = "notify_add_you.chatrobot.sender";
+    public static final String CLASS_NOTIFY_DEL_YOU = "notify_del_you.chatrobot.sender";
+    public static final String CLASS_NOTIFY_SET = "notify_set.chatrobot.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -44,6 +48,16 @@ public class ChatFacade {
     public void checkAuth() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_IS_AUTH, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void callWallet() {
+        try {
+            JSONObject form2Send = getForm2Send(null, CLASS_WALLET, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -255,13 +269,13 @@ public class ChatFacade {
         return rez;
     }
 
-    public void uploadFile2Server(final byte[] file, final UploadFileListener ufl) {
-        uploadFile2Server(file, "png", ufl);
-    }
-
-    public void uploadFile2Server(final byte[] file, String type, final UploadFileListener ufl) {
+    public void uploadFile2Server(final byte[] file, String fname, final UploadFileListener ufl) {
         try {
-            cc.send(new SenderRequest("upload?filetype=" + type + "&sid=" + cc.getSid(),
+            fname = fname.replace("\\", "/");
+            if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
+            if (!fname.contains(".")) throw new Exception("invalid file name");
+            final String[] parts = fname.split("\\.");
+            cc.send(new SenderRequest("upload?filetype=" + parts[1] + "&sid=" + cc.getSid(),
                     file,
                     new SenderRequest.HttpDataListener() {
 
@@ -269,8 +283,7 @@ public class ChatFacade {
                         public void onResponse(String resp) {
                             try {
                                 JSONObject jo = new JSONObject(resp);
-                                ufl.onSuccess(jo.optString("url"));
-
+                                ufl.onSuccess(jo.optString("url"), parts[0], parts[1], getMediaClass(parts[1]));
                             } catch (Exception e) {
                                 ufl.onError(e);
                             }
@@ -286,7 +299,15 @@ public class ChatFacade {
         }
     }
 
-    public void sendFile(String name, String desc, String type, String url, String chatId, String formClass) {
+    private String getMediaClass(String ext) {
+        if ("png".equals(ext) || "jpg".equals(ext)) {
+            return "image.routerobot.sender";
+        } else {
+            return "file.routerobot.sender";
+        }
+    }
+
+    public void sendFile(String name, String desc, String type, String url, String chatId, String formClass, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("name", name);
@@ -294,7 +315,24 @@ public class ChatFacade {
             model.put("desc", desc);
             model.put("url", url);
             final JSONObject jo = getForm2Send(model, formClass, chatId);
-            cc.send(new SenderRequest("fsubmit", jo));
+            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(String data) {
+                    try {
+                        JSONObject jo = new JSONObject(data);
+                        String serverId = jo.optString("ref");
+                        long time = jo.optLong("time");
+                        sml.onSuccess(serverId, time);
+                    } catch (Exception e) {
+                        sml.onError(e);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sml.onError(e);
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -331,7 +369,14 @@ public class ChatFacade {
     }
 
     public interface UploadFileListener {
-        public void onSuccess(String url);
+        /**
+         * File uploaded
+         * @param url - url uploaded file on server
+         * @param name - name of file
+         * @param type - type of file
+         * @param className - class of form to upload file
+         */
+        public void onSuccess(String url, String name, String type, String className);
 
         public void onError(Exception e);
     }

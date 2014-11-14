@@ -26,8 +26,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChatConnector {
 
 //    public static String url = "http://api-rc.sender.mobi/";
-//    public static String url = "http://dev.sender.mobi/";
-    public static String url = "http://dev-2.sender.mobi/";
+    public static String url = "http://dev.sender.mobi/";
+//    public static String url = "http://dev-2.sender.mobi/";
 //    public static final String CODE_OK = "0";
     public static final String CODE_NOT_REGISTERED = "4";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
@@ -45,6 +45,7 @@ public class ChatConnector {
     public static final String senderChatId = "sender";
 
     ChatConnector(String sid, String imei, String devName, String devType, int number, SenderListener listener) {
+        if (sid == null || sid.trim().length() == 0) sid = "undef";
         this.sid = sid;
         this.imei = imei;
         this.devName = devName;
@@ -65,6 +66,12 @@ public class ChatConnector {
                 }
             }
         }).start();
+    }
+
+    public void setUrl(String url) throws Exception {
+        ChatConnector.url = url;
+        disconnect();
+        reg();
     }
 
     public String getUrl() {
@@ -172,6 +179,7 @@ public class ChatConnector {
                     e.printStackTrace();
                 } finally {
                     alive = false;
+                    isReconnectProcess = false;
                     if (in != null) try {
                         in.close();
                     } catch (Exception e) {
@@ -271,6 +279,7 @@ public class ChatConnector {
                     }
                     Thread.sleep(100);
                 }
+                isReconnectProcess = false;
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
