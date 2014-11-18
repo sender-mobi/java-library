@@ -11,13 +11,20 @@ import java.util.Date;
  */
 public class Log {
 
-    public static final boolean isLogVerbose = true;
-
     public static void v(String tag, String msg) {
-        if (isLogVerbose) System.out.println(new SimpleDateFormat("dd.MM.yy HH.mm.ss.SSS").format(new Date())+" ["+tag+"] "+msg);
+        if (isAndroid()) {
+            System.out.println("["+tag+"] " + msg);
+        } else {
+            System.out.println(new SimpleDateFormat("dd.MM.yy HH.mm.ss.SSS").format(new Date())+" ["+tag+"] "+msg);
+        }
     }
 
-    public static void n(String tag, String msg) {
-        System.out.println(new SimpleDateFormat("dd.MM.yy HH.mm.ss.SSS").format(new Date())+" ["+tag+"] "+msg);
+    public static boolean isAndroid() {
+        try {
+            Class.forName("Activity");
+            return true;
+        } catch(ClassNotFoundException e) {
+            return false;
+        }
     }
 }

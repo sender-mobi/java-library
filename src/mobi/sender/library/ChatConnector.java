@@ -26,8 +26,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChatConnector {
 
 //    public static String url = "http://api-rc.sender.mobi/";
-    public static String url = "http://dev.sender.mobi/";
-//    public static String url = "http://dev-2.sender.mobi/";
+//    public static String url = "http://dev.sender.mobi/";
+    public String url;
+    public static final String URL_DEV = "http://dev.sender.mobi/";
+    public static final String URL_PROD = "http://dev-2.sender.mobi/";
 //    public static final String CODE_OK = "0";
     public static final String CODE_NOT_REGISTERED = "4";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
@@ -44,8 +46,9 @@ public class ChatConnector {
     private SenderListener listener;
     public static final String senderChatId = "sender";
 
-    ChatConnector(String sid, String imei, String devName, String devType, int number, SenderListener listener) {
+    ChatConnector(String url, String sid, String imei, String devName, String devType, int number, SenderListener listener) {
         if (sid == null || sid.trim().length() == 0) sid = "undef";
+        this.url = url;
         this.sid = sid;
         this.imei = imei;
         this.devName = devName;
@@ -66,12 +69,6 @@ public class ChatConnector {
                 }
             }
         }).start();
-    }
-
-    public void setUrl(String url) throws Exception {
-        ChatConnector.url = url;
-        disconnect();
-        reg();
     }
 
     public String getUrl() {
@@ -113,7 +110,7 @@ public class ChatConnector {
                         if ("undef".equals(pd.optString("chatId"))) {
                             pd.put("chatId", senderChatId);
                         }
-                        Log.v(TAG, "========> " + request.getPostData() + " (" + request.getId() + ")");
+                        Log.v(TAG, "========> " + request.getRequestURL() + " " + request.getPostData() + " (" + request.getId() + ")");
 
                         HttpPost post = new HttpPost(url + request.getRequestURL());
                         post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));

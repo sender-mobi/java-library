@@ -42,7 +42,11 @@ public class ChatFacade {
     private ChatConnector.SenderListener listener;
 
     public ChatFacade(String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
-        this.cc = new ChatConnector(sid, imei, devName, devType, number, listener);
+        this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devName, devType, number, listener);
+    }
+
+    public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
+        this.cc = new ChatConnector(url, sid, imei, devName, devType, number, listener);
     }
 
     public void checkAuth() {
