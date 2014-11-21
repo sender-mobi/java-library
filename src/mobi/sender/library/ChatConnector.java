@@ -29,7 +29,8 @@ public class ChatConnector {
 //    public static String url = "http://dev.sender.mobi/";
     public String url;
     public static final String URL_DEV = "http://dev.sender.mobi/";
-    public static final String URL_PROD = "http://dev-2.sender.mobi/";
+    public static final String URL_RC = "http://dev-2.sender.mobi/";
+    public static final String URL_PROD = "https://api.sender.mobi/";
 //    public static final String CODE_OK = "0";
     public static final String CODE_NOT_REGISTERED = "4";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
@@ -54,6 +55,7 @@ public class ChatConnector {
         this.devName = devName;
         this.devType = devType;
         this.TAG = "["+number+"]";
+        Log.v(TAG, "Start as "+(Log.isAndroid() ? "Android" : "Desktop"));
         this.listener = listener;
         isReconnectProcess = true;
         new Thread(new Runnable() {
@@ -209,13 +211,7 @@ public class ChatConnector {
             try {
                 JSONObject jo = new JSONObject(data);
                 if (jo.has("packetId")) {
-                    JSONObject rjo = new JSONObject();
-                    rjo.put("packetId", jo.optString("packetId"));
-                    rjo.put("sid", sid);
-                    HttpPost post = new HttpPost(url + "deliv");
-                    post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
-                    HttpResponse response = new DefaultHttpClient().execute(post);
-                    Log.v(TAG, "[stream] deliv of msg ref=" + jo.optString("ref") + " sended" + " response = " + EntityUtils.toString(response.getEntity()));
+                    sendDeliv(jo.optString("packetId"));
                 }
                 String code = jo.optString("code");
                 if (CODE_NOT_REGISTERED.equals(code)) {
@@ -236,6 +232,20 @@ public class ChatConnector {
 
     public String getSid() {
         return sid;
+    }
+
+    public void sendDeliv(String packetId) {
+        try {
+            JSONObject rjo = new JSONObject();
+            rjo.put("packetId", packetId);
+            rjo.put("sid", sid);
+            HttpPost post = new HttpPost(url + "deliv");
+            post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
+            HttpResponse response = new DefaultHttpClient().execute(post);
+            Log.v(TAG, "[stream] deliv of msg packetId=" + packetId + " sended" + " response = " + EntityUtils.toString(response.getEntity()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void reg() throws Exception {

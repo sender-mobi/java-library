@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: vp
@@ -32,11 +34,16 @@ public class ChatFacade {
     public static final String CLASS_SET_CHAT = "set.chatrobot.sender";
     public static final String CLASS_PUSH = "push.pushrobot.sender";
     public static final String CLASS_CHECK_ONLINE = "check.status.sender";
+    public static final String CLASS_SET_LOCATION = ".setDeviceLocation.sender";
+    public static final String CLASS_SHARE_LOCATION = ".shareMyLocation.sender";
     public static final String CLASS_WALLET = ".wallet.sender";
     public static final String CLASS_P2P = ".p2p.sender";
     public static final String CLASS_NOTIFY_ADD_YOU = "notify_add_you.chatrobot.sender";
     public static final String CLASS_NOTIFY_DEL_YOU = "notify_del_you.chatrobot.sender";
     public static final String CLASS_NOTIFY_SET = "notify_set.chatrobot.sender";
+    public static final String CLASS_AUTH_SUCCESS = "success.auth.sender";
+    public static final String CLASS_AUTH_PHONE = "phone.auth.sender";
+    public static final String CLASS_AUTH_OTP = "otp.auth.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -261,6 +268,41 @@ public class ChatFacade {
         }
     }
 
+    public void sendCoordinates(double lat, double lon, double accuracy, Map<String, String> blePoints) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("lat", lat);
+            model.put("lon", lon);
+            model.put("accuracy", accuracy);
+            JSONArray arr = new JSONArray();
+            for (String k : blePoints.keySet()) {
+                JSONObject ble = new JSONObject();
+                ble.put("mac", k);
+                ble.put("RSSI", blePoints.get(k));
+                arr.put(ble);
+            }
+            model.put("bleList", arr);
+            JSONObject form2Send = getForm2Send(model, CLASS_SET_LOCATION, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendIAmHere(double lat, double lon, String message, String chatId) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("lat", lat);
+            model.put("lon", lon);
+            model.put("textMsg", message);
+            JSONObject form2Send = getForm2Send(model, CLASS_SHARE_LOCATION, chatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private JSONObject getForm2Send(JSONObject model, String formClass, String chatId) {
         JSONObject rez = new JSONObject();
         try {
@@ -301,6 +343,10 @@ public class ChatFacade {
         } catch (Exception e) {
             ufl.onError(e);
         }
+    }
+
+    public void sendDeliv(String packetId) {
+        cc.sendDeliv(packetId);
     }
 
     private String getMediaClass(String ext) {

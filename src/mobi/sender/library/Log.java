@@ -11,11 +11,15 @@ import java.util.Date;
  */
 public class Log {
 
+    public static boolean verbose = false;
+
     public static void v(String tag, String msg) {
-        if (isAndroid()) {
-            System.out.println("["+tag+"] " + msg);
-        } else {
-            System.out.println(new SimpleDateFormat("dd.MM.yy HH.mm.ss.SSS").format(new Date())+" ["+tag+"] "+msg);
+        if (verbose) {
+            if (isAndroid()) {
+                System.out.println("["+tag+"] " + msg);
+            } else {
+                System.out.println(new SimpleDateFormat("dd.MM.yy HH.mm.ss.SSS").format(new Date())+" ["+tag+"] "+msg);
+            }
         }
     }
 
