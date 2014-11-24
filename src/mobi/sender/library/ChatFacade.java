@@ -114,12 +114,18 @@ public class ChatFacade {
     }
 
     public void addToChat(final String chatId, String userId) {
+        addToChat(chatId, new String[]{userId});
+    }
+
+    public void addToChat(final String chatId, String[] userIds) {
         JSONArray arr = new JSONArray();
         try {
-            JSONObject jo = new JSONObject();
-            jo.put("id", userId);
-            jo.put("cmd", "add");
-            arr.put(jo);
+            for (String s : userIds) {
+                JSONObject jo = new JSONObject();
+                jo.put("id", s);
+                jo.put("cmd", "add");
+                arr.put(jo);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

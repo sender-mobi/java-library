@@ -25,7 +25,7 @@ public class Log {
 
     public static boolean isAndroid() {
         try {
-            Class.forName("Activity");
+            Class.forName("android.app.Activity");
             return true;
         } catch(ClassNotFoundException e) {
             return false;
