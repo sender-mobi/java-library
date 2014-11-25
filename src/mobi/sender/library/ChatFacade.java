@@ -44,6 +44,7 @@ public class ChatFacade {
     public static final String CLASS_AUTH_SUCCESS = "success.auth.sender";
     public static final String CLASS_AUTH_PHONE = "phone.auth.sender";
     public static final String CLASS_AUTH_OTP = "otp.auth.sender";
+    public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -351,8 +352,8 @@ public class ChatFacade {
         }
     }
 
-    public void sendDeliv(String packetId) {
-        cc.sendDeliv(packetId);
+    public static void sendDeliv(String packetId, String sid) {
+        ChatConnector.sendDeliv(packetId, sid);
     }
 
     private String getMediaClass(String ext) {
@@ -364,11 +365,16 @@ public class ChatFacade {
     }
 
     public void sendFile(String name, String desc, String type, String url, String chatId, String formClass, final SendMsgListener sml) {
+        sendFile(name, desc, type, null, url, chatId, formClass, sml);
+    }
+
+    public void sendFile(String name, String desc, String type, String length, String url, String chatId, String formClass, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("name", name);
             model.put("type", type);
             model.put("desc", desc);
+            if (length != null) model.put("length", length);
             model.put("url", url);
             final JSONObject jo = getForm2Send(model, formClass, chatId);
             cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
@@ -389,6 +395,15 @@ public class ChatFacade {
                     sml.onError(e);
                 }
             }));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void callRechargePhone() {
+        try {
+            JSONObject jo = getForm2Send(new JSONObject(), CLASS_RECHARGE_PHONE, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", jo));
         } catch (Exception e) {
             e.printStackTrace();
         }

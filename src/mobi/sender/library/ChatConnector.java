@@ -27,8 +27,9 @@ public class ChatConnector {
 
 //    public static String url = "http://api-rc.sender.mobi/";
 //    public static String url = "http://dev.sender.mobi/";
-    public String url;
+    public static String url;
     public static final String URL_DEV = "http://dev.sender.mobi/";
+    public static final String URL_DEV_LOC = "http://api-dev.sender.loc/";
     public static final String URL_RC = "http://dev-2.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
 //    public static final String CODE_OK = "0";
@@ -211,7 +212,7 @@ public class ChatConnector {
             try {
                 JSONObject jo = new JSONObject(data);
                 if (jo.has("packetId")) {
-                    sendDeliv(jo.optString("packetId"));
+                    sendDeliv(jo.optString("packetId"), sid);
                 }
                 String code = jo.optString("code");
                 if (CODE_NOT_REGISTERED.equals(code)) {
@@ -234,15 +235,24 @@ public class ChatConnector {
         return sid;
     }
 
-    public void sendDeliv(String packetId) {
+    public static void sendDeliv(final String packetId, String sid) {
         try {
-            JSONObject rjo = new JSONObject();
+            final JSONObject rjo = new JSONObject();
             rjo.put("packetId", packetId);
             rjo.put("sid", sid);
-            HttpPost post = new HttpPost(url + "deliv");
-            post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
-            HttpResponse response = new DefaultHttpClient().execute(post);
-            Log.v(TAG, "[stream] deliv of msg packetId=" + packetId + " sended" + " response = " + EntityUtils.toString(response.getEntity()));
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    HttpPost post = new HttpPost(url + "deliv");
+                    post.setEntity(new ByteArrayEntity(rjo.toString().getBytes()));
+                    try {
+                        HttpResponse response = new DefaultHttpClient().execute(post);
+                        Log.v("[]", "[stream] deliv of msg packetId=" + packetId + " sended" + " response = " + EntityUtils.toString(response.getEntity()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         } catch (Exception e) {
             e.printStackTrace();
         }
