@@ -296,14 +296,31 @@ public class ChatFacade {
         }
     }
 
-    public void sendIAmHere(double lat, double lon, String message, String chatId) {
+    public void sendIAmHere(double lat, double lon, String message, String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("lat", lat);
             model.put("lon", lon);
             model.put("textMsg", message);
             JSONObject form2Send = getForm2Send(model, CLASS_SHARE_LOCATION, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(String data) {
+                    try {
+                        JSONObject jo = new JSONObject(data);
+                        String serverId = jo.optString("ref");
+                        long time = jo.optLong("time");
+                        sml.onSuccess(serverId, time);
+                    } catch (Exception e) {
+                        sml.onError(e);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sml.onError(e);
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
