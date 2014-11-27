@@ -296,12 +296,13 @@ public class ChatFacade {
         }
     }
 
-    public void sendIAmHere(double lat, double lon, String message, String chatId, final SendMsgListener sml) {
+    public void sendIAmHere(double lat, double lon, String message, String mapImgUrl, String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("lat", lat);
             model.put("lon", lon);
             model.put("textMsg", message);
+            model.put("preview", mapImgUrl);
             JSONObject form2Send = getForm2Send(model, CLASS_SHARE_LOCATION, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
                 @Override
