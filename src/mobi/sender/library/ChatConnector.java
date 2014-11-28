@@ -30,7 +30,7 @@ public class ChatConnector {
     public static String url;
     public static final String URL_DEV = "http://dev.sender.mobi/";
     public static final String URL_DEV_LOC = "http://api-dev.sender.loc/";
-    public static final String URL_RC = "http://dev-2.sender.mobi/";
+    public static final String URL_RC = "https://api-rc.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
 //    public static final String CODE_OK = "0";
     public static final String CODE_NOT_REGISTERED = "4";
