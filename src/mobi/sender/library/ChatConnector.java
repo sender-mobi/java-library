@@ -25,10 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ChatConnector {
 
-//    public static String url = "http://api-rc.sender.mobi/";
-//    public static String url = "http://dev.sender.mobi/";
     public static String url;
-    public static final String URL_DEV = "http://dev.sender.mobi/";
     public static final String URL_DEV_LOC = "http://api-dev.sender.loc/";
     public static final String URL_RC = "https://api-rc.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
@@ -43,16 +40,20 @@ public class ChatConnector {
     private static final long WAIT_TIMEOUT = 10 * 1000;
     private String TAG;
     private String hash;
+    private String authToken;
+    private String companyId;
     private String devName, devType, imei;
     private HttpURLConnection conn;
     private SenderListener listener;
     public static final String senderChatId = "sender";
 
-    ChatConnector(String url, String sid, String imei, String devName, String devType, int number, SenderListener listener) {
+    ChatConnector(String url, String sid, String imei, String devName, String devType, int number, String authToken, String companyId, SenderListener listener) {
         if (sid == null || sid.trim().length() == 0) sid = "undef";
         this.url = url;
         this.sid = sid;
         this.imei = imei;
+        this.authToken = authToken;
+        this.companyId = companyId;
         this.devName = devName;
         this.devType = devType;
         this.TAG = "["+number+"]";
@@ -264,6 +265,8 @@ public class ChatConnector {
         jo.put("imei", imei);
         jo.put("devType", devType);
         jo.put("devName", devName);
+        jo.put("authToken", authToken);
+        jo.put("companyId", companyId);
 //        jo.put("username", CtConnector.getMyName());
         Log.v(TAG, "======> " + reqUrl + " data: " + jo.toString());
         HttpPost post = new HttpPost(reqUrl);

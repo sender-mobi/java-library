@@ -18,6 +18,7 @@ public class ChatFacade {
     public static final String CLASS_FILE_ROUTE = "file.routerobot.sender";
     public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
+    public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
     public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
@@ -45,16 +46,22 @@ public class ChatFacade {
     public static final String CLASS_AUTH_PHONE = "phone.auth.sender";
     public static final String CLASS_AUTH_OTP = "otp.auth.sender";
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
+    public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
+    public static final String CLASS_ALERT = ".alert.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
 
     public ChatFacade(String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
-        this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devName, devType, number, listener);
+        this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devName, devType, number, null, null, listener);
     }
 
     public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
-        this.cc = new ChatConnector(url, sid, imei, devName, devType, number, listener);
+        this.cc = new ChatConnector(url, sid, imei, devName, devType, number, null, null, listener);
+    }
+
+    public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, String authToken, String companyId, ChatConnector.SenderListener listener) {
+        this.cc = new ChatConnector(url, sid, imei, devName, devType, number, authToken, companyId, listener);
     }
 
     public void checkAuth() {
@@ -78,12 +85,12 @@ public class ChatFacade {
     }
 
     public void send(JSONObject model, String className) {
-        send(model, className, null);
+        send(model, className, null, null);
     }
 
-    public void send(JSONObject model, String className, String chatId) {
+    public void send(JSONObject model, String className, String chatId, String procId) {
         try {
-            JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId);
+            JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -154,6 +161,16 @@ public class ChatFacade {
             JSONObject form2Send = getForm2Send(model, CLASS_SET_CHAT, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void callCompany(String chatId, String compUserId) {
+        try {
+            JSONObject jo = getForm2Send(new JSONObject(), ".contact."+compUserId, chatId);
+
+            cc.send(new SenderRequest("fsubmit", jo));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -327,12 +344,16 @@ public class ChatFacade {
         }
     }
 
-
     private JSONObject getForm2Send(JSONObject model, String formClass, String chatId) {
+        return getForm2Send(model, formClass, chatId, null);
+    }
+
+    private JSONObject getForm2Send(JSONObject model, String formClass, String chatId, String procId) {
         JSONObject rez = new JSONObject();
         try {
             if (model != null) rez.put("model", model);
             if (chatId != null) rez.put("chatId", chatId);
+            if (procId != null) rez.put("procId", procId);
             if (formClass != null) rez.put("class", formClass);
         } catch (Exception e) {
             e.printStackTrace();
@@ -376,9 +397,11 @@ public class ChatFacade {
 
     private String getMediaClass(String ext) {
         if ("png".equals(ext) || "jpg".equals(ext)) {
-            return "image.routerobot.sender";
+            return CLASS_IMAGE_ROUTE;
+        } else if ("mp4".equals(ext)) {
+            return CLASS_VIDEO_ROUTE;
         } else {
-            return "file.routerobot.sender";
+            return CLASS_FILE_ROUTE;
         }
     }
 
@@ -387,11 +410,16 @@ public class ChatFacade {
     }
 
     public void sendFile(String name, String desc, String type, String length, String url, String chatId, String formClass, final SendMsgListener sml) {
+        sendFile(name, null, desc, type, length, url, chatId, formClass, sml);
+    }
+
+    public void sendFile(String name, String preview, String desc, String type, String length, String url, String chatId, String formClass, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("name", name);
             model.put("type", type);
             model.put("desc", desc);
+            if (preview != null) model.put("preview", preview);
             if (length != null) model.put("length", length);
             model.put("url", url);
             final JSONObject jo = getForm2Send(model, formClass, chatId);
