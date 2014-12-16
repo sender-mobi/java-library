@@ -20,6 +20,7 @@ public class ChatFacade {
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
     public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
+    @Deprecated
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
     public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
     public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
@@ -48,6 +49,8 @@ public class ChatFacade {
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
     public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
     public static final String CLASS_ALERT = ".alert.sender";
+    public static final String CLASS_SET_CHAT_INFO = ".chatSetInfoForm.sender";
+    public static final String CLASS_CHAT_INFO_NOTIFICATION = ".chatSetNotification.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -77,6 +80,18 @@ public class ChatFacade {
     public void callWallet() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_WALLET, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void callSetChatInfo(String chatId) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("chatId", chatId);
+            JSONObject form2Send = getForm2Send(model, CLASS_SET_CHAT_INFO, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -361,33 +376,109 @@ public class ChatFacade {
         return rez;
     }
 
-    public void uploadFile2Server(final byte[] file, String fname, final UploadFileListener ufl) {
+    public void sendFile2Chat(final byte[] file, final byte[] preview, String fname, final String desc, final String length, final String chatId, final SendFileListener sfl) {
         try {
             fname = fname.replace("\\", "/");
             if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
             if (!fname.contains(".")) throw new Exception("invalid file name");
+            final String ffname = fname;
             final String[] parts = fname.split("\\.");
-            cc.send(new SenderRequest("upload?filetype=" + parts[1] + "&sid=" + cc.getSid(),
-                    file,
-                    new SenderRequest.HttpDataListener() {
-
-                        @Override
-                        public void onResponse(String resp) {
-                            try {
-                                JSONObject jo = new JSONObject(resp);
-                                ufl.onSuccess(jo.optString("url"), parts[0], parts[1], getMediaClass(parts[1]));
-                            } catch (Exception e) {
-                                ufl.onError(e);
+            if (preview != null) {
+                uploadFile(preview, "png", new UploadFileListener() {
+                    @Override
+                    public void onSuccess(final String previewUrl, String className) {
+                        uploadFile(file, parts[1], new UploadFileListener() {
+                            @Override
+                            public void onSuccess(String url, String className) {
+                                doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.length / 1024) : length, url, previewUrl, getMediaClass(parts[1]), chatId, sfl);
                             }
-                        }
 
-                        @Override
-                        public void onError(Exception e) {
+                            @Override
+                            public void onError(Exception e) {
+                                sfl.onError(e);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                uploadFile(file, parts[1], new UploadFileListener() {
+                    @Override
+                    public void onSuccess(String url, String className) {
+                        doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, String.valueOf(file.length / 1024), url, null, getMediaClass(parts[1]), chatId, sfl);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        sfl.onError(e);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            sfl.onError(e);
+        }
+    }
+
+    public void uploadFile(final byte[] file, final String type, final UploadFileListener ufl) {
+        try {
+            cc.send(new SenderRequest("upload?filetype=" + type + "&sid=" + cc.getSid(),
+                file,
+                new SenderRequest.HttpDataListener() {
+
+                    @Override
+                    public void onResponse(String resp) {
+                        try {
+                            JSONObject jo = new JSONObject(resp);
+                            ufl.onSuccess(jo.optString("url"), getMediaClass(type));
+                        } catch (Exception e) {
                             ufl.onError(e);
                         }
-                    }));
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        ufl.onError(e);
+                    }
+                }));
         } catch (Exception e) {
-            ufl.onError(e);
+            e.printStackTrace();
+        }
+    }
+
+    private void doSendFileInfo(String name, final String type, String desc, String length, final String url, final String previewUrl, final String className, String chatId, final SendFileListener sfl) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("name", name);
+            model.put("type", type);
+            model.put("desc", desc);
+            if (previewUrl != null) model.put("preview", previewUrl);
+            if (length != null) model.put("length", length);
+            model.put("url", url);
+            final JSONObject jo = getForm2Send(model, className, chatId);
+            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(String data) {
+                    try {
+                        JSONObject jo = new JSONObject(data);
+                        String serverId = jo.optString("ref");
+                        long time = jo.optLong("time");
+                        sfl.onSuccess(serverId, time, className, type, url);
+                    } catch (Exception e) {
+                        sfl.onError(e);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sfl.onError(e);
+                }
+            }));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -396,53 +487,14 @@ public class ChatFacade {
     }
 
     private String getMediaClass(String ext) {
-        if ("png".equals(ext) || "jpg".equals(ext)) {
+        if ("png".equals(ext) || "jpg".equals(ext) || "jpeg".equals(ext)) {
             return CLASS_IMAGE_ROUTE;
+        } else if ("mp3".equals(ext)) {
+            return CLASS_AUDIO_ROUTE;
         } else if ("mp4".equals(ext)) {
             return CLASS_VIDEO_ROUTE;
         } else {
             return CLASS_FILE_ROUTE;
-        }
-    }
-
-    public void sendFile(String name, String desc, String type, String url, String chatId, String formClass, final SendMsgListener sml) {
-        sendFile(name, desc, type, null, url, chatId, formClass, sml);
-    }
-
-    public void sendFile(String name, String desc, String type, String length, String url, String chatId, String formClass, final SendMsgListener sml) {
-        sendFile(name, null, desc, type, length, url, chatId, formClass, sml);
-    }
-
-    public void sendFile(String name, String preview, String desc, String type, String length, String url, String chatId, String formClass, final SendMsgListener sml) {
-        try {
-            JSONObject model = new JSONObject();
-            model.put("name", name);
-            model.put("type", type);
-            model.put("desc", desc);
-            if (preview != null) model.put("preview", preview);
-            if (length != null) model.put("length", length);
-            model.put("url", url);
-            final JSONObject jo = getForm2Send(model, formClass, chatId);
-            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
-                @Override
-                public void onResponse(String data) {
-                    try {
-                        JSONObject jo = new JSONObject(data);
-                        String serverId = jo.optString("ref");
-                        long time = jo.optLong("time");
-                        sml.onSuccess(serverId, time);
-                    } catch (Exception e) {
-                        sml.onError(e);
-                    }
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    sml.onError(e);
-                }
-            }));
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -486,20 +538,19 @@ public class ChatFacade {
     }
 
     public interface UploadFileListener {
-        /**
-         * File uploaded
-         * @param url - url uploaded file on server
-         * @param name - name of file
-         * @param type - type of file
-         * @param className - class of form to upload file
-         */
-        public void onSuccess(String url, String name, String type, String className);
+        public void onSuccess(String url, String className);
 
         public void onError(Exception e);
     }
 
     public interface SendMsgListener {
         public void onSuccess(String serverId, long time);
+
+        public void onError(Exception e);
+    }
+
+    public interface SendFileListener {
+        public void onSuccess(String serverId, long time, String className, String type, String url);
 
         public void onError(Exception e);
     }
