@@ -89,9 +89,7 @@ public class ChatFacade {
 
     public void callSetChatInfo(String chatId) {
         try {
-            JSONObject model = new JSONObject();
-            model.put("chatId", chatId);
-            JSONObject form2Send = getForm2Send(model, CLASS_SET_CHAT_INFO, ChatConnector.senderChatId);
+            JSONObject form2Send = getForm2Send(null, CLASS_SET_CHAT_INFO, chatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -103,7 +101,29 @@ public class ChatFacade {
         send(model, className, null, null);
     }
 
-    public void send(JSONObject model, String className, String chatId, String procId) {
+    public void sendForm(JSONObject model, String className, String chatId, String procId, final SendMsgListener sml) {
+        JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
+        cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+            @Override
+            public void onResponse(String resp) {
+                try {
+                    JSONObject jo = new JSONObject(resp);
+                    String serverId = jo.optString("packetId");
+                    long time = jo.optLong("time");
+                    sml.onSuccess(serverId, time);
+                } catch (JSONException e) {
+                    sml.onError(e);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                sml.onError(e);
+            }
+        }));
+    }
+
+    private void send(JSONObject model, String className, String chatId, String procId) {
         try {
             JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
             cc.send(new SenderRequest("fsubmit", form2Send));
@@ -204,7 +224,7 @@ public class ChatFacade {
                 public void onResponse(String resp) {
                     try {
                         JSONObject jo = new JSONObject(resp);
-                        String serverId = jo.optString("ref");
+                        String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sml.onSuccess(serverId, time);
                     } catch (JSONException e) {
@@ -341,7 +361,7 @@ public class ChatFacade {
                 public void onResponse(String data) {
                     try {
                         JSONObject jo = new JSONObject(data);
-                        String serverId = jo.optString("ref");
+                        String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sml.onSuccess(serverId, time);
                     } catch (Exception e) {
@@ -464,7 +484,7 @@ public class ChatFacade {
                 public void onResponse(String data) {
                     try {
                         JSONObject jo = new JSONObject(data);
-                        String serverId = jo.optString("ref");
+                        String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sfl.onSuccess(serverId, time, className, type, url);
                     } catch (Exception e) {
