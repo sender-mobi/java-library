@@ -51,6 +51,7 @@ public class ChatFacade {
     public static final String CLASS_ALERT = ".alert.sender";
     public static final String CLASS_SET_CHAT_INFO = ".chatSetInfoForm.sender";
     public static final String CLASS_CHAT_INFO_NOTIFICATION = ".chatSetNotification.sender";
+    public static final String CLASS_SET_CHAT_PROFILE = ".chatSetInfo.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -252,7 +253,9 @@ public class ChatFacade {
             if (userId == null) {
                 jo = getForm2Send(new JSONObject(), CLASS_INFO_USER, ChatConnector.senderChatId);
             } else {
-                jo = getForm2Send(new JSONObject("{userId:" + userId + "}"), CLASS_INFO_USER, ChatConnector.senderChatId);
+                JSONObject model = new JSONObject();
+                model.put("userId", userId);
+                jo = getForm2Send(model, CLASS_INFO_USER, ChatConnector.senderChatId);
             }
 
             cc.send(new SenderRequest("fsubmit", jo));
@@ -270,6 +273,29 @@ public class ChatFacade {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void setChatProfile(byte[] icon, final String type, final String name, final String desc) {
+        uploadFile(icon, type, new UploadFileListener() {
+
+            @Override
+            public void onSuccess(String url, String className) {
+                try {
+                    JSONObject model = new JSONObject();
+                    model.put("chatName", name);
+                    model.put("chatDesc", desc);
+                    model.put("chatPhoto", url);
+                    cc.send(new SenderRequest("fsubmit", getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void sendRead(final String packetId, final String chatId) {
@@ -507,7 +533,7 @@ public class ChatFacade {
     }
 
     private String getMediaClass(String ext) {
-        if ("png".equals(ext) || "jpg".equals(ext) || "jpeg".equals(ext)) {
+        if ("png".equals(ext) || "jpg".equals(ext) || "jpeg".equals(ext) || "gif".equals(ext)) {
             return CLASS_IMAGE_ROUTE;
         } else if ("mp3".equals(ext)) {
             return CLASS_AUDIO_ROUTE;
@@ -527,11 +553,30 @@ public class ChatFacade {
         }
     }
 
-    public void setMySelfData(String name, String iconUrl, String description) {
+    public void setMySelfData(final String name, final byte[] icon, final String type, final String description) {
+        if (icon != null && icon.length > 0) {
+            uploadFile(icon, type, new UploadFileListener() {
+
+                @Override
+                public void onSuccess(String url, String className) {
+                    sendMySelfData(url, name, description);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            sendMySelfData("", name, description);
+        }
+    }
+
+    private void sendMySelfData(String url, String name, String description) {
         try {
             JSONObject model = new JSONObject();
             model.put("name", name);
-            model.put("photo", iconUrl);
+            model.put("photo", url);
             model.put("description", description);
             JSONObject jo = getForm2Send(model,CLASS_SET_SELF_INFO, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit", jo));
