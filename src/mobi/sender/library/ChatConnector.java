@@ -32,6 +32,7 @@ public class ChatConnector {
 //    public static final String CODE_OK = "0";
     public static final String CODE_NOT_REGISTERED = "4";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
+    private SenderRequest currReq;
     private boolean alive = false;
     private boolean isReconnectProcess = false;
     private boolean pingMonitoring = false;
@@ -82,11 +83,18 @@ public class ChatConnector {
     public boolean isAlive() {
         return alive;
     }
+    
+    public void cancelSend() {
+        if (currReq != null) {
+            currReq.error(new Exception("cancelled"));
+        }
+    }
 
     public void send(final SenderRequest request) {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                currReq = request;
                 try {
                     if (!alive) {
                         queue.add(request);
@@ -95,37 +103,38 @@ public class ChatConnector {
                             Log.v(TAG, "Stream not found, try reconnect...");
                             initStream();
                         }
-                        return;
-                    }
-                    String resp;
-                    DefaultHttpClient httpClient = new DefaultHttpClient();
-                    if (request.getData() != null) {
-                        Log.v(TAG, "========> " + request.getRequestURL() + " with binary data " + " (" + request.getId() + ")");
-                        HttpPost post = new HttpPost(url + request.getRequestURL());
-                        post.setEntity(new ByteArrayEntity(request.getData()));
-                        post.addHeader("Content-Type", "image/png");
-                        resp = EntityUtils.toString(httpClient.execute(post).getEntity());
                     } else {
-                        JSONObject pd = request.getPostData();
-                        if (pd == null) {
-                            pd = new JSONObject();
-                        }
-                        pd.put("sid", sid);
-                        if ("undef".equals(pd.optString("chatId"))) {
-                            pd.put("chatId", senderChatId);
-                        }
-                        Log.v(TAG, "========> " + request.getRequestURL() + " " + request.getPostData() + " (" + request.getId() + ")");
+                        String resp;
+                        DefaultHttpClient httpClient = new DefaultHttpClient();
+                        if (request.getData() != null) {
+                            Log.v(TAG, "========> " + request.getRequestURL() + " with binary data " + " (" + request.getId() + ")");
+                            HttpPost post = new HttpPost(url + request.getRequestURL());
+                            post.setEntity(new ByteArrayEntity(request.getData()));
+                            post.addHeader("Content-Type", "image/png");
+                            resp = EntityUtils.toString(httpClient.execute(post).getEntity());
+                        } else {
+                            JSONObject pd = request.getPostData();
+                            if (pd == null) {
+                                pd = new JSONObject();
+                            }
+                            pd.put("sid", sid);
+                            if ("undef".equals(pd.optString("chatId"))) {
+                                pd.put("chatId", senderChatId);
+                            }
+                            Log.v(TAG, "========> " + request.getRequestURL() + " " + request.getPostData() + " (" + request.getId() + ")");
 
-                        HttpPost post = new HttpPost(url + request.getRequestURL());
-                        post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
-                        resp = EntityUtils.toString(httpClient.execute(post).getEntity());
+                            HttpPost post = new HttpPost(url + request.getRequestURL());
+                            post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
+                            resp = EntityUtils.toString(httpClient.execute(post).getEntity());
+                        }
+                        Log.v(TAG, "<------ " + resp + " (" + request.getId() + ")");
+                        request.response(resp);
                     }
-                    Log.v(TAG, "<------ " + resp + " (" + request.getId() + ")");
-                    request.response(resp);
                 } catch (Exception e) {
                     e.printStackTrace();
                     request.error(new Exception(e.getMessage()));
                 }
+                currReq = null;
             }
         }).start();
     }

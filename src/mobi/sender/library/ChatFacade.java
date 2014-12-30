@@ -49,6 +49,7 @@ public class ChatFacade {
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
     public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
     public static final String CLASS_ALERT = ".alert.sender";
+    public static final String CLASS_ALERT_KICK = "kickass.alert.sender";
     public static final String CLASS_SET_CHAT_INFO = ".chatSetInfoForm.sender";
     public static final String CLASS_CHAT_INFO_NOTIFICATION = ".chatSetNotification.sender";
     public static final String CLASS_SET_CHAT_PROFILE = ".chatSetInfo.sender";
@@ -56,18 +57,22 @@ public class ChatFacade {
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
 
+    @SuppressWarnings("unused")
     public ChatFacade(String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
         this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devName, devType, number, null, null, listener);
     }
-
+    
+    @SuppressWarnings("unused")
     public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
         this.cc = new ChatConnector(url, sid, imei, devName, devType, number, null, null, listener);
     }
-
+    
+    @SuppressWarnings("unused")
     public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, String authToken, String companyId, ChatConnector.SenderListener listener) {
         this.cc = new ChatConnector(url, sid, imei, devName, devType, number, authToken, companyId, listener);
     }
-
+    
+    @SuppressWarnings("unused")
     public void checkAuth() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_IS_AUTH, ChatConnector.senderChatId);
@@ -77,7 +82,7 @@ public class ChatFacade {
             e.printStackTrace();
         }
     }
-
+    @SuppressWarnings("unused")
     public void callWallet() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_WALLET, ChatConnector.senderChatId);
@@ -88,6 +93,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void callSetChatInfo(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SET_CHAT_INFO, chatId);
@@ -98,10 +104,12 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void send(JSONObject model, String className) {
         send(model, className, null, null);
     }
 
+    @SuppressWarnings("unused")
     public void sendForm(JSONObject model, String className, String chatId, String procId, final SendMsgListener sml) {
         JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
         cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
@@ -141,6 +149,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void syncContacts(JSONArray contacts) {
         try {
             JSONObject jo = new JSONObject();
@@ -153,6 +162,17 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
+    public void sendAlert(final String chatId) {
+        try {
+            JSONObject form2Send = getForm2Send(null, CLASS_ALERT, chatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public void createChat(String userId) {
         addToChat(null, userId);
     }
@@ -176,6 +196,7 @@ public class ChatFacade {
         setChat(chatId, arr);
     }
 
+    @SuppressWarnings("unused")
     public void delFromChat(final String chatId, String userId) {
         JSONArray arr = new JSONArray();
         try {
@@ -202,6 +223,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void callCompany(String chatId, String compUserId) {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), ".contact."+compUserId, chatId);
@@ -212,6 +234,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void sendMessage(final String text, final String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
@@ -243,6 +266,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void getUserData() {
         getUserData(null);
     }
@@ -264,6 +288,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void sendToken(final String token) {
         try {
             JSONObject rjo = new JSONObject();
@@ -275,29 +300,45 @@ public class ChatFacade {
         }
     }
 
-    public void setChatProfile(byte[] icon, final String type, final String name, final String desc) {
-        uploadFile(icon, type, new UploadFileListener() {
+    @SuppressWarnings("unused")
+    public void setChatProfile(byte[] icon, final String type, final String name, final String desc, final String chatId) {
+        if (icon != null) {
+            uploadFile(icon, type, new UploadFileListener() {
 
-            @Override
-            public void onSuccess(String url, String className) {
-                try {
-                    JSONObject model = new JSONObject();
-                    model.put("chatName", name);
-                    model.put("chatDesc", desc);
-                    model.put("chatPhoto", url);
-                    cc.send(new SenderRequest("fsubmit", getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
-                } catch (Exception e) {
+                @Override
+                public void onSuccess(String url, String className) {
+                    try {
+                        JSONObject model = new JSONObject();
+                        model.put("chatName", name);
+                        model.put("chatDesc", desc);
+                        model.put("chatPhoto", url);
+                        model.put("chatId", chatId);
+                        cc.send(new SenderRequest("fsubmit", getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
                     e.printStackTrace();
                 }
-            }
-
-            @Override
-            public void onError(Exception e) {
+            });    
+        } else {
+            try {
+                JSONObject model = new JSONObject();
+                model.put("chatName", name);
+                model.put("chatDesc", desc);
+                model.put("chatId", chatId);
+                cc.send(new SenderRequest("fsubmit", getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
+            } catch (Exception e){
                 e.printStackTrace();
             }
-        });
+        }
+        
     }
 
+    @SuppressWarnings("unused")
     public void sendRead(final String packetId, final String chatId) {
         try {
             JSONObject model = new JSONObject();
@@ -309,6 +350,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void getChatInfo(String chatId) {
         try {
             JSONObject jo = getForm2Send(null, CLASS_INFO_CHAT, chatId);
@@ -318,6 +360,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void sendTyping(String chatId) {
         try {
             JSONObject rjo = new JSONObject();
@@ -329,6 +372,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void sendIAmOnline() {
         try {
             JSONObject rjo = new JSONObject();
@@ -339,6 +383,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void checkOnline(String[] userIdS) {
         try {
             JSONObject model = new JSONObject();
@@ -353,6 +398,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void sendCoordinates(double lat, double lon, double accuracy, Map<String, String> blePoints) {
         try {
             JSONObject model = new JSONObject();
@@ -374,7 +420,8 @@ public class ChatFacade {
         }
     }
 
-    public void sendIAmHere(double lat, double lon, String message, String mapImgUrl, String chatId, final SendMsgListener sml) {
+    @SuppressWarnings("unused")
+    private void sendIAmHere(String lat, String lon, String message, String mapImgUrl, String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("lat", lat);
@@ -422,7 +469,8 @@ public class ChatFacade {
         return rez;
     }
 
-    public void sendFile2Chat(final byte[] file, final byte[] preview, String fname, final String desc, final String length, final String chatId, final SendFileListener sfl) {
+    @SuppressWarnings("unused")
+    public void sendFile2Chat(final byte[] file, final byte[] preview, String fname, final String desc, final String length, final String chatId, final String lat, final String lon, final SendFileListener sfl) {
         try {
             fname = fname.replace("\\", "/");
             if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
@@ -454,8 +502,22 @@ public class ChatFacade {
             } else {
                 uploadFile(file, parts[1], new UploadFileListener() {
                     @Override
-                    public void onSuccess(String url, String className) {
-                        doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, String.valueOf(file.length / 1024), url, null, getMediaClass(parts[1]), chatId, sfl);
+                    public void onSuccess(final String url, final String className) {
+                        if (lat != null && lon !=null) {
+                            sendIAmHere(lat, lon, desc, url, chatId, new SendMsgListener() {
+                                @Override
+                                public void onSuccess(String serverId, long time) {
+                                    sfl.onSuccess(serverId, time, CLASS_SHARE_LOCATION, parts[1], url);
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    sfl.onError(e);
+                                }
+                            });
+                        } else {
+                            doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.length / 1024) : length, url, null, getMediaClass(parts[1]), chatId, sfl);
+                        }
                     }
 
                     @Override
@@ -467,6 +529,11 @@ public class ChatFacade {
         } catch (Exception e) {
             sfl.onError(e);
         }
+    }
+
+    @SuppressWarnings("unused")
+    public void cancelSend() {
+        cc.cancelSend();
     }
 
     public void uploadFile(final byte[] file, final String type, final UploadFileListener ufl) {
@@ -528,6 +595,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public static void sendDeliv(String packetId, String sid) {
         ChatConnector.sendDeliv(packetId, sid);
     }
@@ -544,6 +612,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void callRechargePhone() {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), CLASS_RECHARGE_PHONE, ChatConnector.senderChatId);
@@ -553,6 +622,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setMySelfData(final String name, final byte[] icon, final String type, final String description) {
         if (icon != null && icon.length > 0) {
             uploadFile(icon, type, new UploadFileListener() {
@@ -568,7 +638,7 @@ public class ChatFacade {
                 }
             });
         } else {
-            sendMySelfData("", name, description);
+            sendMySelfData(null, name, description);
         }
     }
 
@@ -585,6 +655,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void getMySelfData() {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), CLASS_GET_SELF_INFO, ChatConnector.senderChatId);
@@ -594,10 +665,12 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public boolean isConnected() {
         return cc.isAlive();
     }
 
+    @SuppressWarnings("unused")
     public void stop() {
         cc.disconnect();
     }
