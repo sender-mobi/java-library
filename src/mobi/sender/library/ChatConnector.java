@@ -1,6 +1,7 @@
 package mobi.sender.library;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -26,7 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChatConnector {
 
     public static String url;
-    public static final String URL_DEV_LOC = "http://api-dev.sender.loc/";
+    public static final String URL_DEV = "https://api-dev.sender.mobi/";
     public static final String URL_RC = "https://api-rc.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
 //    public static final String CODE_OK = "0";
@@ -106,26 +107,25 @@ public class ChatConnector {
                     } else {
                         String resp;
                         DefaultHttpClient httpClient = new DefaultHttpClient();
-                        if (request.getData() != null) {
+                        if (request.getData() != null) {                        // -------------------- binary post
                             Log.v(TAG, "========> " + request.getRequestURL() + " with binary data " + " (" + request.getId() + ")");
                             HttpPost post = new HttpPost(url + request.getRequestURL());
                             post.setEntity(new ByteArrayEntity(request.getData()));
                             post.addHeader("Content-Type", "image/png");
                             resp = EntityUtils.toString(httpClient.execute(post).getEntity());
-                        } else {
-                            JSONObject pd = request.getPostData();
-                            if (pd == null) {
-                                pd = new JSONObject();
-                            }
-                            pd.put("sid", sid);
-                            if ("undef".equals(pd.optString("chatId"))) {
-                                pd.put("chatId", senderChatId);
+                        } else if (request.getPostData() != null) {             // -------------------- post
+                            request.getPostData().put("sid", sid);
+                            if ("undef".equals(request.getPostData().optString("chatId"))) {
+                                request.getPostData().put("chatId", senderChatId);
                             }
                             Log.v(TAG, "========> " + request.getRequestURL() + " " + request.getPostData() + " (" + request.getId() + ")");
-
                             HttpPost post = new HttpPost(url + request.getRequestURL());
                             post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
                             resp = EntityUtils.toString(httpClient.execute(post).getEntity());
+                        } else {                                                // -------------------- get
+                            Log.v(TAG, "========> " + request.getRequestURL() + " (" + request.getId() + ")");
+                            HttpGet get = new HttpGet(url + request.getRequestURL());
+                            resp = EntityUtils.toString(httpClient.execute(get).getEntity());
                         }
                         Log.v(TAG, "<------ " + resp + " (" + request.getId() + ")");
                         request.response(resp);
