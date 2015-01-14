@@ -10,10 +10,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -41,23 +41,25 @@ public class ChatConnector {
     private String sid;
     private static final long WAIT_TIMEOUT = 10 * 1000;
     private String TAG;
+    private String clientVersion;
     private String hash;
     private String authToken;
     private String companyId;
-    private String devName, devType, imei;
+    private String devModel, devType, imei;
     private HttpURLConnection conn;
     private SenderListener listener;
     public static final String senderChatId = "sender";
 
-    ChatConnector(String url, String sid, String imei, String devName, String devType, int number, String authToken, String companyId, SenderListener listener) {
+    ChatConnector(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, String authToken, String companyId, SenderListener listener) {
         if (sid == null || sid.trim().length() == 0) sid = "undef";
         this.url = url;
         this.sid = sid;
         this.imei = imei;
         this.authToken = authToken;
         this.companyId = companyId;
-        this.devName = devName;
+        this.devModel = devModel;
         this.devType = devType;
+        this.clientVersion = clientVersion;
         this.TAG = "["+number+"]";
         Log.v(TAG, "Start as "+(Log.isAndroid() ? "Android" : "Desktop"));
         this.listener = listener;
@@ -107,12 +109,44 @@ public class ChatConnector {
                     } else {
                         String resp;
                         DefaultHttpClient httpClient = new DefaultHttpClient();
-                        if (request.getData() != null) {                        // -------------------- binary post
+                        if (request.getData() != null && request.getData().available() > 0) {                        // -------------------- binary post
                             Log.v(TAG, "========> " + request.getRequestURL() + " with binary data " + " (" + request.getId() + ")");
-                            HttpPost post = new HttpPost(url + request.getRequestURL());
-                            post.setEntity(new ByteArrayEntity(request.getData()));
-                            post.addHeader("Content-Type", "image/png");
-                            resp = EntityUtils.toString(httpClient.execute(post).getEntity());
+                            URL purl = new URL(url + request.getRequestURL());
+                            HttpURLConnection con;
+                            if (purl.getProtocol().toLowerCase().equals("https")) {
+                                con = (HttpsURLConnection) purl.openConnection();
+                            } else {
+                                con = (HttpURLConnection) purl.openConnection();
+                            }
+                            con.setUseCaches(false);
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            con.setRequestMethod("POST");
+                            con.setRequestProperty("Content-type", "image/png");
+                            con.connect();
+                            int bufferSize = 1024;
+                            byte[] buffer = new byte[bufferSize];
+                            int len;
+                            OutputStream out = con.getOutputStream();
+                            while ((len = request.getData().read(buffer)) != -1) {
+                                out.write(buffer, 0, len);
+                            }
+                            out.flush();
+                            out.close();
+                            request.getData().close();
+                            StringBuilder sb = new StringBuilder();
+                            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+                            String nextLine;
+                            while ((nextLine = in.readLine()) != null) {
+                                sb.append(nextLine);
+                            }
+                            in.close();
+                            con.disconnect();
+                            resp = sb.toString();
+//                            HttpPost post = new HttpPost(url + request.getRequestURL());
+//                            post.setEntity(new ByteArrayEntity(request.getData()));
+//                            post.addHeader("Content-Type", "image/png");
+//                            resp = EntityUtils.toString(httpClient.execute(post).getEntity());
                         } else if (request.getPostData() != null) {             // -------------------- post
                             request.getPostData().put("sid", sid);
                             if ("undef".equals(request.getPostData().optString("chatId"))) {
@@ -273,7 +307,13 @@ public class ChatConnector {
         JSONObject jo = new JSONObject();
         jo.put("imei", imei);
         jo.put("devType", devType);
-        jo.put("devName", devName);
+        jo.put("language", Locale.getDefault().getISO3Language());
+        jo.put("devModel", devModel);
+        jo.put("devName", devModel);
+        jo.put("clientVersion", clientVersion);
+        jo.put("devOS", Log.isAndroid() ? "android" : System.getProperty("os.name"));
+        jo.put("clientType", Log.isAndroid() ? "android" : System.getProperty("os.name"));
+        jo.put("versionOS", System.getProperty("os.version"));
         jo.put("authToken", authToken);
         jo.put("companyId", companyId);
 //        jo.put("username", CtConnector.getMyName());
@@ -316,6 +356,18 @@ public class ChatConnector {
         }
     }
 
+    private byte[] getBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        int len = 0;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+        return byteBuffer.toByteArray();
+    }
+    
     void stopStream() {
         pingMonitoring = false;
         if (conn != null) {

@@ -2,6 +2,7 @@ package mobi.sender.library;
 
 import org.json.JSONObject;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 /**
@@ -14,7 +15,7 @@ public class SenderRequest {
     private String requestURL;
     private JSONObject postData;
     private HttpDataListener hdl;
-    private byte[] data;
+    private InputStream data;
     private String id = UUID.randomUUID().toString().replace("-", "");
 
     public SenderRequest(String requestURL, JSONObject postData, HttpDataListener hdl) {
@@ -23,7 +24,7 @@ public class SenderRequest {
         this.hdl = hdl;
     }
 
-    public SenderRequest(String requestURL, byte[] postData, HttpDataListener hdl) {
+    public SenderRequest(String requestURL, InputStream postData, HttpDataListener hdl) {
         this.requestURL = requestURL;
         this.data = postData;
         this.hdl = hdl;
@@ -68,7 +69,7 @@ public class SenderRequest {
         else e.printStackTrace();
     }
 
-    public byte[] getData() {
+    public InputStream getData() {
         return data;
     }
 

@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -60,18 +62,18 @@ public class ChatFacade {
     private ChatConnector.SenderListener listener;
 
     @SuppressWarnings("unused")
-    public ChatFacade(String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
-        this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devName, devType, number, null, null, listener);
+    public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int number, ChatConnector.SenderListener listener) {
+        this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devModel, devType, clientVersion, number, null, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, ChatConnector.SenderListener listener) {
-        this.cc = new ChatConnector(url, sid, imei, devName, devType, number, null, null, listener);
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, ChatConnector.SenderListener listener) {
+        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, number, null, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devName, String devType, int number, String authToken, String companyId, ChatConnector.SenderListener listener) {
-        this.cc = new ChatConnector(url, sid, imei, devName, devType, number, authToken, companyId, listener);
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, String authToken, String companyId, ChatConnector.SenderListener listener) {
+        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, number, authToken, companyId, listener);
     }
     
     @SuppressWarnings("unused")
@@ -337,7 +339,7 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void setChatProfile(byte[] icon, final String type, final String name, final String desc, final String chatId) {
+    public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId) {
         if (icon != null) {
             uploadFile(icon, type, new UploadFileListener() {
 
@@ -506,7 +508,7 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendFile2Chat(final byte[] file, final byte[] preview, String fname, final String desc, final String length, final String chatId, final String lat, final String lon, final SendFileListener sfl) {
+    public void sendFile2Chat(final InputStream file, final byte[] preview, String fname, final String desc, final String length, final String chatId, final String lat, final String lon, final SendFileListener sfl) {
         try {
             fname = fname.replace("\\", "/");
             if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
@@ -514,7 +516,8 @@ public class ChatFacade {
             final String ffname = fname;
             final String[] parts = fname.split("\\.");
             if (preview != null) {
-                uploadFile(preview, "png", new UploadFileListener() {
+                
+                uploadFile(new ByteArrayInputStream(preview), "png", new UploadFileListener() {
                     @Override
                     public void onSuccess(final String previewUrl) {
                         if (lat != null && lon !=null) {
@@ -534,7 +537,11 @@ public class ChatFacade {
                             uploadFile(file, parts[1], new UploadFileListener() {
                                 @Override
                                 public void onSuccess(final String url) {
-                                    doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.length / 1024) : length, url, previewUrl, getMediaClass(parts[1]), chatId, sfl);
+                                    try {
+                                        doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, previewUrl, getMediaClass(parts[1]), chatId, sfl);   
+                                    } catch (Exception e) {
+                                        sfl.onError(e);
+                                    }
                                 }
 
                                 @Override
@@ -567,7 +574,11 @@ public class ChatFacade {
                                 }
                             });
                         } else {
-                            doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.length / 1024) : length, url, null, getMediaClass(parts[1]), chatId, sfl);
+                            try {
+                                doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, null, getMediaClass(parts[1]), chatId, sfl);
+                            } catch (Exception e) {
+                                sfl.onError(e);
+                            }
                         }
                     }
 
@@ -587,7 +598,7 @@ public class ChatFacade {
         cc.cancelSend();
     }
 
-    public void uploadFile(final byte[] file, final String type, final UploadFileListener ufl) {
+    public void uploadFile(final InputStream file, final String type, final UploadFileListener ufl) {
         try {
             cc.send(new SenderRequest("upload?filetype=" + type + "&sid=" + cc.getSid(),
                 file,
@@ -674,22 +685,26 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void setMySelfData(final String name, final byte[] icon, final String type, final String description) {
-        if (icon != null && icon.length > 0) {
-            uploadFile(icon, type, new UploadFileListener() {
+    public void setMySelfData(final String name, final InputStream icon, final String type, final String description) {
+        try {
+            if (icon != null && icon.available() > 0) {
+                uploadFile(icon, type, new UploadFileListener() {
 
-                @Override
-                public void onSuccess(String url) {
-                    sendMySelfData(url, name, description);
-                }
+                    @Override
+                    public void onSuccess(String url) {
+                        sendMySelfData(url, name, description);
+                    }
 
-                @Override
-                public void onError(Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        } else {
-            sendMySelfData(null, name, description);
+                    @Override
+                    public void onError(Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                sendMySelfData(null, name, description);
+            }   
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
