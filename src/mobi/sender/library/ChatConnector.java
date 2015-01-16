@@ -74,6 +74,8 @@ public class ChatConnector {
                     initStream();
                 } catch (Exception e) {
                     e.printStackTrace();
+                } finally {
+                    isReconnectProcess = false;
                 }
             }
         }).start();
@@ -105,6 +107,8 @@ public class ChatConnector {
                         if (!isReconnectProcess) {
                             Log.v(TAG, "Stream not found, try reconnect...");
                             initStream();
+                        } else {
+                            Log.v(TAG, "reconnect in process...");
                         }
                     } else {
                         String resp;
