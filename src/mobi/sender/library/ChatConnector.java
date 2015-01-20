@@ -10,7 +10,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
@@ -30,7 +32,6 @@ public class ChatConnector {
     public static final String URL_DEV = "https://api-dev.sender.mobi/";
     public static final String URL_RC = "https://api-rc.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
-//    public static final String CODE_OK = "0";
     public static final String CODE_NOT_REGISTERED = "4";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
     private SenderRequest currReq;
@@ -61,6 +62,7 @@ public class ChatConnector {
         this.devType = devType;
         this.clientVersion = clientVersion;
         this.TAG = "["+number+"]";
+        
         Log.v(TAG, "Start as "+(Log.isAndroid() ? "Android" : "Desktop"));
         this.listener = listener;
         isReconnectProcess = true;
@@ -168,6 +170,9 @@ public class ChatConnector {
                         Log.v(TAG, "<------ " + resp + " (" + request.getId() + ")");
                         request.response(resp);
                     }
+                } catch (OutOfMemoryError e) {
+                    e.printStackTrace();
+                    request.error(new Exception("file is too large"));
                 } catch (Exception e) {
                     e.printStackTrace();
                     request.error(new Exception(e.getMessage()));
@@ -178,6 +183,7 @@ public class ChatConnector {
     }
 
     private void initStream() {
+        isReconnectProcess = true;
         final String id = UUID.randomUUID().toString().replace("-", "");
         new Thread(new Runnable() {
             @Override
@@ -311,7 +317,7 @@ public class ChatConnector {
         JSONObject jo = new JSONObject();
         jo.put("imei", imei);
         jo.put("devType", devType);
-        jo.put("language", Locale.getDefault().getISO3Language());
+        jo.put("language", Locale.getDefault().getLanguage());
         jo.put("devModel", devModel);
         jo.put("devName", devModel);
         jo.put("clientVersion", clientVersion);
@@ -335,6 +341,11 @@ public class ChatConnector {
     }
 
     private class PingWatcher extends Thread {
+
+        public PingWatcher() {
+            super("PingWatcher");
+        }
+
         @Override
         public void run() {
             Log.v(TAG, "PingWatcher started");
@@ -358,18 +369,6 @@ public class ChatConnector {
             }
             Log.v(TAG, "PingWatcher stopped");
         }
-    }
-
-    private byte[] getBytes(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-        int bufferSize = 1024;
-        byte[] buffer = new byte[bufferSize];
-
-        int len = 0;
-        while ((len = inputStream.read(buffer)) != -1) {
-            byteBuffer.write(buffer, 0, len);
-        }
-        return byteBuffer.toByteArray();
     }
     
     void stopStream() {

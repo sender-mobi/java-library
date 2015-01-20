@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,6 +58,7 @@ public class ChatFacade {
     public static final String CLASS_SET_CHAT_PROFILE = ".chatSetInfo.sender";
     public static final String CLASS_SENDMONEY = ".sendMoney.sender";
     public static final String CLASS_P2P_TRANSFER = "transfer.p2p.sender";
+    public static final String CLASS_SEND_MONITORING = ".monitoringData.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -254,6 +256,27 @@ public class ChatFacade {
             model.put("users", users);
             model.put("chatId", chatId);
             JSONObject form2Send = getForm2Send(model, CLASS_SET_CHAT, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sendMonitoringData(final float deltaPower, long period, int req_out, int req_in, List<String> apps) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("delta_power", deltaPower);
+            model.put("period", period);
+            model.put("requests_out", req_out);
+            model.put("messages_in", req_in);
+            JSONArray arr = new JSONArray();
+            for (String s : apps) {
+                arr.put(s);
+            }
+            model.put("apps", arr);
+            JSONObject form2Send = getForm2Send(model, CLASS_SEND_MONITORING, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
