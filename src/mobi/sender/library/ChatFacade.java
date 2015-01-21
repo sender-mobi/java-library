@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -59,6 +60,8 @@ public class ChatFacade {
     public static final String CLASS_SENDMONEY = ".sendMoney.sender";
     public static final String CLASS_P2P_TRANSFER = "transfer.p2p.sender";
     public static final String CLASS_SEND_MONITORING = ".monitoringData.sender";
+    public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
+    public static final String CLASS_QRCODE = ".qr.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -213,6 +216,18 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
+    public void sendQR(final String qr) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("qrCode", qr);
+            JSONObject form2Send = getForm2Send(model, CLASS_QRCODE, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public void createChat(String userId) {
         addToChat(null, userId);
     }
@@ -277,6 +292,20 @@ public class ChatFacade {
             }
             model.put("apps", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_MONITORING, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sendLocale() {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("locale", Locale.getDefault().getLanguage());
+            JSONArray arr = new JSONArray();
+            JSONObject form2Send = getForm2Send(model, CLASS_SEND_LOCALE, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {

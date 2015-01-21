@@ -229,6 +229,8 @@ public class ChatConnector {
                             break;
                         }
                     }
+                } catch (OutOfMemoryError e) {
+                    e.printStackTrace();
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
