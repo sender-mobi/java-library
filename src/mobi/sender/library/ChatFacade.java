@@ -66,6 +66,9 @@ public class ChatFacade {
     public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
     public static final String CLASS_SHOP = ".worldOfTanks.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
+    public static final String CLASS_NOTIFICATION_ADD = "add.chatNotification.sender";
+    public static final String CLASS_NOTIFICATION_DEL = "del.chatNotification.sender";
+    public static final String CLASS_NOTIFICATION_LEAVE = "leave.chatNotification.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;

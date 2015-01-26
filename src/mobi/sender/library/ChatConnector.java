@@ -283,13 +283,19 @@ public class ChatConnector {
                 listener.onData(jo);
                 jsonPart = new StringBuilder();
             } catch (JSONException e) {
-                jsonPart.append(data);
+                try {
+                    jsonPart.append(data);
+                } catch (OutOfMemoryError ome) {
+                    ome.printStackTrace();
+                    jsonPart = new StringBuilder();
+                }
                 Log.v(TAG, "data = "+data);
                 e.printStackTrace();
             }
             return true;
         } catch (Exception e) {
             e.printStackTrace();
+            jsonPart = new StringBuilder();
         }
         return false;
     }
