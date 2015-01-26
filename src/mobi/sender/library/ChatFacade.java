@@ -69,6 +69,7 @@ public class ChatFacade {
     public static final String CLASS_NOTIFICATION_ADD = "add.chatNotification.sender";
     public static final String CLASS_NOTIFICATION_DEL = "del.chatNotification.sender";
     public static final String CLASS_NOTIFICATION_LEAVE = "leave.chatNotification.sender";
+    public static final String CLASS_STICKER = ".sticker.sender";
 
     private ChatConnector cc;
     private ChatConnector.SenderListener listener;
@@ -152,6 +153,19 @@ public class ChatFacade {
     public void callShop(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SHOP, chatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sendSticker(String id, String chatId) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("id", id);
+            JSONObject form2Send = getForm2Send(model, CLASS_STICKER, chatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
