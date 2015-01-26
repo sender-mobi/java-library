@@ -1,5 +1,8 @@
 package mobi.sender.library;
 
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,6 +64,7 @@ public class ChatFacade {
     public static final String CLASS_P2P_TRANSFER = "transfer.p2p.sender";
     public static final String CLASS_SEND_MONITORING = ".monitoringData.sender";
     public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
+    public static final String CLASS_SHOP = ".worldOfTanks.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
 
     private ChatConnector cc;
@@ -95,34 +99,28 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public void checkVersion(final CheckVersionListener cvl) {
-        try {
-            cc.send(new SenderRequest("get_version", new SenderRequest.HttpDataListener() {
-                @Override
-                public void onResponse(String data) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
                     int ver = -1;
                     String url = null;
-                    try {
-                        JSONObject jo = new JSONObject(data);
-                        if (jo.has("android_version")) {
-                            ver = jo.optInt("android_version");
-                        }
-                        if (jo.has("android")) {
-                            url = jo.optString("android");
-                        }
-                        cvl.onSuccess(ver, url);
-                    } catch (Exception e) {
-                        cvl.onError(e);
+                    Log.v(cc.TAG, "====> " + ChatConnector.url + "get_version");
+                    String s = EntityUtils.toString(new DefaultHttpClient().execute(new HttpGet(ChatConnector.url + "get_version")).getEntity());
+                    Log.v(cc.TAG, "<---- " + s);
+                    JSONObject jo = new JSONObject(s);
+                    if (jo.has("android_version")) {
+                        ver = jo.optInt("android_version");
                     }
-                }
-
-                @Override
-                public void onError(Exception e) {
+                    if (jo.has("android")) {
+                        url = jo.optString("android");
+                    }
+                    cvl.onSuccess(ver, url);
+                } catch (Exception e) {
                     cvl.onError(e);
                 }
-            }));
-        } catch (Exception e) {
-            cvl.onError(e);
-        }
+            }
+        }).start();
     }
     
     @SuppressWarnings("unused")
@@ -140,6 +138,17 @@ public class ChatFacade {
     public void callSetChatInfo(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SET_CHAT_INFO, chatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void callShop(String chatId) {
+        try {
+            JSONObject form2Send = getForm2Send(null, CLASS_SHOP, chatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -391,6 +400,46 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
+    public void nativeAuthStepPhone(final String phone) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("phone", phone);
+            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_PHONE, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void nativeAuthStepOtpIvr(String otp, String procId, boolean isIvr) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("password", otp);
+            model.put("ivr", isIvr);
+            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_OTP, ChatConnector.senderChatId, procId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void nativeAuthStepName(String userName, String procId) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("userName", userName);
+            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_SUCCESS, ChatConnector.senderChatId, procId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @SuppressWarnings("unused")
     public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId) {
         if (icon != null) {
             uploadFile(icon, type, new UploadFileListener() {
@@ -552,7 +601,15 @@ public class ChatFacade {
             if (model != null) rez.put("model", model);
             if (chatId != null) rez.put("chatId", chatId);
             if (procId != null) rez.put("procId", procId);
-            if (formClass != null) rez.put("class", formClass);
+            if (formClass != null) {
+                rez.put("class", formClass);
+                String[] ss = formClass.split("\\.");
+                if (ss.length == 3) {
+                    rez.put("formId", ss[0]);
+                    rez.put("robotId", ss[1]);
+                    rez.put("companyId", ss[2]);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

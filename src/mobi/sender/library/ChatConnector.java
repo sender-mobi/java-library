@@ -41,7 +41,7 @@ public class ChatConnector {
     private long lastPingTime;
     private String sid;
     private static final long WAIT_TIMEOUT = 10 * 1000;
-    private String TAG;
+    public String TAG;
     private String clientVersion;
     private String hash;
     private String authToken;
@@ -50,6 +50,7 @@ public class ChatConnector {
     private HttpURLConnection conn;
     private SenderListener listener;
     public static final String senderChatId = "sender";
+    private StringBuilder jsonPart = new StringBuilder();
 
     ChatConnector(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, String authToken, String companyId, SenderListener listener) {
         if (sid == null || sid.trim().length() == 0) sid = "undef";
@@ -265,6 +266,10 @@ public class ChatConnector {
                 }
                 return true;
             }
+            if (jsonPart.length() > 0) {
+                jsonPart.append(data);
+                data = jsonPart.toString();
+            }
             try {
                 JSONObject jo = new JSONObject(data);
                 if (jo.has("packetId")) {
@@ -276,7 +281,9 @@ public class ChatConnector {
                     return false;
                 }
                 listener.onData(jo);
+                jsonPart = new StringBuilder();
             } catch (JSONException e) {
+                jsonPart.append(data);
                 Log.v(TAG, "data = "+data);
                 e.printStackTrace();
             }
