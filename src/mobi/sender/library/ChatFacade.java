@@ -163,6 +163,7 @@ public class ChatFacade {
         try {
             JSONObject model = new JSONObject();
             model.put("id", id);
+            model.put("text", "sticker");
             JSONObject form2Send = getForm2Send(model, CLASS_STICKER, chatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));

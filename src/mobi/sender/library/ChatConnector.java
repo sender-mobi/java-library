@@ -245,6 +245,9 @@ public class ChatConnector {
                     if (state != State.connected) {
                         queue.add(request);
                         Log.v(TAG, "request " + request.getRequestURL() + " id=" + request.getId() + " delayed");
+                        if (state == State.disconnected) {
+                            doConnect();
+                        }
                     } else {
                         String resp;
                         DefaultHttpClient httpClient = new DefaultHttpClient();
