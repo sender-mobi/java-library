@@ -11,6 +11,7 @@ import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -19,82 +20,219 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
 /**
- * Created with IntelliJ IDEA.
- * User: vp
- * Date: 14.09.14
- * Time: 08:33
+ * Sender API controller: requests, responses long pooling connect, ping monitoring, etc..  
  */
 public class ChatConnector {
 
-    public static String url;
     public static final String URL_DEV = "https://api-dev.sender.mobi/";
     public static final String URL_RC = "https://api-rc.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
+    private static enum State {registering, connecting, connected, disconnecting, disconnected}
+    private State state;
+    private String sid = "undef";
     public static final String CODE_NOT_REGISTERED = "4";
+    private String url, devId, devModel, devType, clientVersion, authToken, companyId, TAG;
+    private SenderListener sml;
+    private HttpURLConnection conn;
+    private long lastPingTime;
+    private String jsonPart = "";
+    private static final CopyOnWriteArrayList<String> currDids = new CopyOnWriteArrayList<String>();
+    public static final String senderChatId = "sender";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
     private SenderRequest currReq;
-    private boolean alive = false;
-    private boolean isReconnectProcess = false;
-    private boolean pingMonitoring = false;
-    private long lastPingTime;
-    private String sid;
-    private static final long WAIT_TIMEOUT = 10 * 1000;
-    public String TAG;
-    private String clientVersion;
-    private String hash;
-    private String authToken;
-    private String companyId;
-    private String devModel, devType, imei;
-    private HttpURLConnection conn;
-    private SenderListener listener;
-    public static final String senderChatId = "sender";
-    private StringBuilder jsonPart = new StringBuilder();
 
-    ChatConnector(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, String authToken, String companyId, SenderListener listener) {
-        if (sid == null || sid.trim().length() == 0) sid = "undef";
-        this.url = url;
+    public ChatConnector(String url,
+                         String sid,
+                         String devId,
+                         String devModel,
+                         String devType,
+                         String clientVersion,
+                         int number,
+                         String authToken,
+                         String companyId,
+                         SenderListener sml) throws Exception {
         this.sid = sid;
-        this.imei = imei;
-        this.authToken = authToken;
-        this.companyId = companyId;
+        this.url = url;
+        this.devId = devId;
         this.devModel = devModel;
         this.devType = devType;
         this.clientVersion = clientVersion;
-        this.TAG = "["+number+"]";
-        
-        Log.v(TAG, "Start as "+(Log.isAndroid() ? "Android" : "Desktop"));
-        this.listener = listener;
-        isReconnectProcess = true;
+        this.authToken = authToken;
+        this.companyId = companyId;
+        this.sml = sml;
+        this.TAG = String.valueOf(number);
+        doConnect();
+    }
+
+    private void doReg() {
+        state = State.registering;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if ("undef".equals(ChatConnector.this.sid)) {
-                        reg();
+                    String reqUrl = url + "reg";
+                    JSONObject jo = new JSONObject();
+                    jo.put("imei", devId);
+                    jo.put("devType", devType);
+                    jo.put("language", Locale.getDefault().getLanguage());
+                    jo.put("devModel", devModel);
+                    jo.put("devName", devModel);
+                    jo.put("clientVersion", clientVersion);
+                    jo.put("devOS", Log.isAndroid() ? "android" : System.getProperty("os.name"));
+                    jo.put("clientType", Log.isAndroid() ? "android" : System.getProperty("os.name"));
+                    jo.put("versionOS", System.getProperty("os.version"));
+                    jo.put("authToken", authToken);
+                    jo.put("companyId", companyId);
+                    Log.v(TAG, "======> " + reqUrl + " data: " + jo.toString());
+                    HttpPost post = new HttpPost(reqUrl);
+                    post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
+                    String rResp = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
+                    Log.v(TAG, "<------: " + rResp);
+                    JSONObject rjo = new JSONObject(rResp);
+                    if (!rjo.has("sid") || !rjo.has("chat_id")) {
+                        throw new Exception("invalid response: " + rResp);
                     }
-                    initStream();
+                    sid = rjo.optString("sid");
+                    sml.onReg(sid);
+                    currDids.remove(devId);
+                    doConnect();
                 } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
-                    isReconnectProcess = false;
+                    sml.onRegError(e);
                 }
             }
-        }).start();
+        }, "reg").start();
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public boolean isAlive() {
-        return alive;
+    public void doConnect() throws Exception {
+        if (currDids.contains(devId)) {
+            throw new Exception("stream for " + devId + " already created!");
+        }
+        currDids.add(devId);
+        state = State.connecting;
+        final String id = UUID.randomUUID().toString().replace("-", "");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                BufferedReader in = null;
+                Thread pw = null;
+                String requestURL = url + "stream?sid=" + sid;
+                Log.v(TAG, "long req: " + requestURL + " (" + id + ")");
+                try {
+                    conn = (HttpsURLConnection) new URL(requestURL).openConnection();
+                    conn.setDoInput(true);
+                    conn.setConnectTimeout(5 * 1000);
+                    conn.setReadTimeout(30 * 60 * 1000);
+                    conn.setRequestMethod("GET");
+                    conn.connect();
+                    if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                        throw new IOException("invalid http code: " + conn.getResponseCode());
+                    }
+                    in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+                    if (state != State.connecting) throw new Exception("invalid state"); 
+                    state = State.connected;
+                    pw = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            lastPingTime = System.currentTimeMillis();
+                            while (System.currentTimeMillis() - lastPingTime < 10 * 1000) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            Log.v(TAG, "ping lost! " + id);
+                            cutConnection();
+                        }
+                    }, "PingWatcher");
+                    pw.start();
+                    for (SenderRequest sr : queue) {
+                        queue.remove(sr);
+                        Log.v(TAG, "request " + sr.getRequestURL() + " id=" + sr.getId() + " resuming from queue");
+                        send(sr);
+                    }
+                    String nextLine;
+                    while ((nextLine = in.readLine()) != null && state == State.connected) {
+                        if (nextLine.trim().length() > 0) {
+                            Log.v(TAG, "<======== " + nextLine + " from " + id);
+                            if (!doMessage(nextLine)) {
+                                Log.v(TAG, "breaking long pool connect: " + id);
+                                break;
+                            }
+                        } else {
+                            lastPingTime = System.currentTimeMillis();
+                            Log.v(TAG, "PING " + id);
+                        }
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (in != null) {
+                            in.close();
+                        }
+                        if (conn != null) {
+                            conn.disconnect();
+                            conn = null;
+                        }
+                        if (pw != null) {
+                            pw.interrupt();
+                            pw.join(1000);
+                        }
+                    
+                        Log.v(TAG, "disconnected " + id);
+                        if (state == State.connected) {
+                            doConnect();
+                        } else if (state == State.connecting) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            if (state == State.connecting) {
+                                doConnect();
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }, "stream " + id).start();
     }
     
-    public void cancelSend() {
-        if (currReq != null) {
-            currReq.error(new Exception("cancelled"));
+    public void doDisconnect() {
+        state = State.disconnecting;
+        cutConnection();
+        state = State.disconnected;
+        currDids.remove(devId);
+    }
+    
+    private boolean doMessage(String data) {
+        if (jsonPart.length() > 0) {
+            data = jsonPart + data;
+            jsonPart = "";
+        }
+        try {
+            JSONObject jo = new JSONObject(data);
+            if (jo.has("packetId")) {
+                sendDeliv(url, jo.optString("packetId"), sid);
+            }
+            String code = jo.optString("code");
+            if (CODE_NOT_REGISTERED.equals(code)) {
+                Log.v(TAG, "invalid sid");
+                doReg();
+                return false;
+            }
+            sml.onData(jo);
+            return true;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            jsonPart = data;
+            return true;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -104,15 +242,9 @@ public class ChatConnector {
             public void run() {
                 currReq = request;
                 try {
-                    if (!alive) {
+                    if (state != State.connected) {
                         queue.add(request);
                         Log.v(TAG, "request " + request.getRequestURL() + " id=" + request.getId() + " delayed");
-                        if (!isReconnectProcess) {
-                            Log.v(TAG, "Stream not found, try reconnect...");
-                            initStream();
-                        } else {
-                            Log.v(TAG, "reconnect in process...");
-                        }
                     } else {
                         String resp;
                         DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -150,10 +282,6 @@ public class ChatConnector {
                             in.close();
                             con.disconnect();
                             resp = sb.toString();
-//                            HttpPost post = new HttpPost(url + request.getRequestURL());
-//                            post.setEntity(new ByteArrayEntity(request.getData()));
-//                            post.addHeader("Content-Type", "image/png");
-//                            resp = EntityUtils.toString(httpClient.execute(post).getEntity());
                         } else if (request.getPostData() != null) {             // -------------------- post
                             request.getPostData().put("sid", sid);
                             if ("undef".equals(request.getPostData().optString("chatId"))) {
@@ -180,131 +308,10 @@ public class ChatConnector {
                 }
                 currReq = null;
             }
-        }).start();
+        }, "Send").start();
     }
-
-    private void initStream() {
-        isReconnectProcess = true;
-        final String id = UUID.randomUUID().toString().replace("-", "");
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                stopStream();
-                String requestURL = url + "stream?sid=" + sid;
-                BufferedReader in = null;
-                hash = id;
-                Log.v(TAG, "long req: " + requestURL + " (" + hash + ")");
-                try {
-                    Integer respCode;
-                    URL url = new URL(requestURL);
-                    if (url.getProtocol().toLowerCase().equals("https")) {
-                        conn = (HttpsURLConnection) url.openConnection();
-                    } else {
-                        conn = (HttpURLConnection) url.openConnection();
-                    }
-                    conn.setUseCaches(false);
-                    conn.setDoOutput(true);
-                    conn.setDoInput(true);
-                    conn.setAllowUserInteraction(false);
-                    conn.setConnectTimeout(5 * 1000);
-                    conn.setReadTimeout(30 * 60 * 1000);
-                    conn.setRequestMethod("GET");
-                    conn.connect();
-                    new PingWatcher().start();
-                    lastPingTime = System.currentTimeMillis();
-                    Log.v(TAG, "connected " + hash);
-                    respCode = conn.getResponseCode();
-                    Log.v(TAG, "HTTP code " + respCode);
-                    if (respCode != HttpURLConnection.HTTP_OK) {
-                        throw new Exception("http code " + respCode);
-                    }
-                    in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                    String nextLine;
-                    while ((nextLine = in.readLine()) != null) {
-                        alive = true;
-                        if (nextLine.trim().length() > 0) {
-                            Log.v(TAG, "<======== " + nextLine + " from " + hash);
-                        }
-                        if (!onData(nextLine, hash)) {
-                            Log.v(TAG, "breaking long pool connect: " + hash);
-                            break;
-                        }
-                    }
-                } catch (OutOfMemoryError e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    alive = false;
-                    isReconnectProcess = false;
-                    if (in != null) try {
-                        in.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        if (conn != null) conn.disconnect();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    Log.v(TAG, "disconnected " + hash);
-                }
-            }
-        }, "stream").start();
-    }
-
-    private boolean onData(String data, String hash) {
-        try {
-            if (data.trim().length() == 0) {
-                Log.v(TAG, "[PING] " + hash);
-                lastPingTime = System.currentTimeMillis();
-                while (queue.size() > 0) {
-                    SenderRequest sr = queue.get(0);
-                    queue.remove(0);
-                    Log.v(TAG, "request " + sr.getRequestURL() + " id=" + sr.getId() + " from queue resuming");
-                    send(sr);
-                }
-                return true;
-            }
-            if (jsonPart.length() > 0) {
-                jsonPart.append(data);
-                data = jsonPart.toString();
-            }
-            try {
-                JSONObject jo = new JSONObject(data);
-                if (jo.has("packetId")) {
-                    sendDeliv(jo.optString("packetId"), sid);
-                }
-                String code = jo.optString("code");
-                if (CODE_NOT_REGISTERED.equals(code)) {
-                    reg();
-                    return false;
-                }
-                listener.onData(jo);
-                jsonPart = new StringBuilder();
-            } catch (JSONException e) {
-                try {
-                    jsonPart.append(data);
-                } catch (OutOfMemoryError ome) {
-                    ome.printStackTrace();
-                    jsonPart = new StringBuilder();
-                }
-                Log.v(TAG, "data = "+data);
-                e.printStackTrace();
-            }
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            jsonPart = new StringBuilder();
-        }
-        return false;
-    }
-
-    public String getSid() {
-        return sid;
-    }
-
-    public static void sendDeliv(final String packetId, String sid) {
+    
+    public static void sendDeliv(final String url, final String packetId, String sid) {
         try {
             final JSONObject rjo = new JSONObject();
             rjo.put("packetId", packetId);
@@ -327,91 +334,37 @@ public class ChatConnector {
         }
     }
 
-    private void reg() throws Exception {
-        String reqUrl = url + "reg";
-        JSONObject jo = new JSONObject();
-        jo.put("imei", imei);
-        jo.put("devType", devType);
-        jo.put("language", Locale.getDefault().getLanguage());
-        jo.put("devModel", devModel);
-        jo.put("devName", devModel);
-        jo.put("clientVersion", clientVersion);
-        jo.put("devOS", Log.isAndroid() ? "android" : System.getProperty("os.name"));
-        jo.put("clientType", Log.isAndroid() ? "android" : System.getProperty("os.name"));
-        jo.put("versionOS", System.getProperty("os.version"));
-        jo.put("authToken", authToken);
-        jo.put("companyId", companyId);
-//        jo.put("username", CtConnector.getMyName());
-        Log.v(TAG, "======> " + reqUrl + " data: " + jo.toString());
-        HttpPost post = new HttpPost(reqUrl);
-        post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-        String rResp = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
-        Log.v(TAG, "<------: " + rResp);
-        JSONObject rjo = new JSONObject(rResp);
-        if (!rjo.has("sid") || !rjo.has("chat_id")) {
-            throw new Exception("invalid response: " + rResp);
-        }
-        sid = rjo.optString("sid");
-        listener.onReg(sid);
-    }
-
-    private class PingWatcher extends Thread {
-
-        public PingWatcher() {
-            super("PingWatcher");
-        }
-
-        @Override
-        public void run() {
-            Log.v(TAG, "PingWatcher started");
-            try {
-                pingMonitoring = true;
-                isReconnectProcess = false;
-                while (pingMonitoring) {
-                    if (System.currentTimeMillis() > WAIT_TIMEOUT + lastPingTime) {
-                        Log.v(TAG, "PING LOST! Init reconnect...");
-                        alive = false;
-                        isReconnectProcess = true;
-                        lastPingTime = System.currentTimeMillis();
-                        initStream();
-                        break;
-                    }
-                    Thread.sleep(100);
-                }
-                isReconnectProcess = false;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            Log.v(TAG, "PingWatcher stopped");
+    public void cancelSend() {
+        if (currReq != null) {
+            currReq.error(new Exception("cancelled"));
         }
     }
     
-    void stopStream() {
-        pingMonitoring = false;
-        if (conn != null) {
-            Log.v(TAG, "try close old stream " + hash);
-            try {
-                conn.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Log.v(TAG, "stream closed " + hash);
-            conn = null;
-        }
-        alive = false;
+    public String getTAG() {
+        return TAG;
     }
 
-    void disconnect() {
-        stopStream();
-        try {
-            while (isAlive()) Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    public String getSid() {
+        return sid;
+    }
+
+    private void cutConnection() {
+        if (conn != null) {
+            try {
+                conn.disconnect();
+            } catch (Exception ignored) {}
+            conn = null;
         }
+    }
+
+    public boolean isAlive() {
+        return state == State.connected;
     }
 
     public interface SenderListener {
-        public void onReg(String sid);
         public void onData(JSONObject jo);
+        public void onReg(String sid);
+        public void onRegError(Exception e);
     }
+
 }

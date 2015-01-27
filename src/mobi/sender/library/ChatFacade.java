@@ -35,8 +35,6 @@ public class ChatFacade {
     public static final String CLASS_DELIV = "deliv.statusrobot.sender";
     public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
     public static final String CLASS_SYNC_CONTACT = "sync.contactrobot.sender";
-    public static final String CLASS_PHONE_AUTH = "phone.auth.sender";
-    public static final String CLASS_OTP_AUTH = "otp.auth.sender";
     public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
     public static final String CLASS_GET_SELF_INFO = ".getSelfInfo.sender";
     public static final String CLASS_SET_SELF_INFO = ".setSelfInfo.sender";
@@ -53,6 +51,7 @@ public class ChatFacade {
     public static final String CLASS_AUTH_SUCCESS = "success.auth.sender";
     public static final String CLASS_AUTH_PHONE = "phone.auth.sender";
     public static final String CLASS_AUTH_OTP = "otp.auth.sender";
+    public static final String CLASS_AUTH_CONFIRM_OTHER = "confirm.auth.sender";
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
     public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
     public static final String CLASS_ALERT = ".alert.sender";
@@ -72,20 +71,19 @@ public class ChatFacade {
     public static final String CLASS_STICKER = ".sticker.sender";
 
     private ChatConnector cc;
-    private ChatConnector.SenderListener listener;
 
     @SuppressWarnings("unused")
-    public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int number, ChatConnector.SenderListener listener) {
+    public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int number, ChatConnector.SenderListener listener) throws Exception {
         this.cc = new ChatConnector(ChatConnector.URL_PROD, sid, imei, devModel, devType, clientVersion, number, null, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, ChatConnector.SenderListener listener) {
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, ChatConnector.SenderListener listener) throws Exception {
         this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, number, null, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, String authToken, String companyId, ChatConnector.SenderListener listener) {
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int number, String authToken, String companyId, ChatConnector.SenderListener listener) throws Exception {
         this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, number, authToken, companyId, listener);
     }
     
@@ -109,9 +107,9 @@ public class ChatFacade {
                 try {
                     int ver = -1;
                     String url = null;
-                    Log.v(cc.TAG, "====> " + ChatConnector.url + "get_version");
-                    String s = EntityUtils.toString(new DefaultHttpClient().execute(new HttpGet(ChatConnector.url + "get_version")).getEntity());
-                    Log.v(cc.TAG, "<---- " + s);
+                    Log.v(cc.getTAG(), "====> " + ChatConnector.URL_PROD + "get_version");
+                    String s = EntityUtils.toString(new DefaultHttpClient().execute(new HttpGet(ChatConnector.URL_PROD + "get_version")).getEntity());
+                    Log.v(cc.getTAG(), "<---- " + s);
                     JSONObject jo = new JSONObject(s);
                     if (jo.has("android_version")) {
                         ver = jo.optInt("android_version");
@@ -305,7 +303,7 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendMonitoringData(final float deltaPower, long period, int req_out, int req_in, List<String> apps) {
+    public void sendMonitoringData(final float deltaPower, long period, int req_out, int req_in, List<String> apps, final SendListener sl) {
         try {
             JSONObject model = new JSONObject();
             model.put("delta_power", deltaPower);
@@ -318,8 +316,17 @@ public class ChatFacade {
             }
             model.put("apps", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_MONITORING, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
-                    form2Send));
+            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(String data) {
+                    sl.onSuccess();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sl.onError(e);
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -417,11 +424,11 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void nativeAuthStepPhone(final String phone) {
+    public void nativeAuthStepPhone(final String phone, String procId) {
         try {
             JSONObject model = new JSONObject();
             model.put("phone", phone);
-            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_PHONE, ChatConnector.senderChatId);
+            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_PHONE, ChatConnector.senderChatId, procId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -784,8 +791,8 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public static void sendDeliv(String packetId, String sid) {
-        ChatConnector.sendDeliv(packetId, sid);
+    public static void sendDeliv(String url, String packetId, String sid) {
+        ChatConnector.sendDeliv(url, packetId, sid);
     }
 
     private String getMediaClass(String ext) {
@@ -864,7 +871,7 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public void stop() {
-        cc.disconnect();
+        cc.doDisconnect();
     }
 
     public interface UploadFileListener {
@@ -875,6 +882,12 @@ public class ChatFacade {
 
     public interface SendMsgListener {
         public void onSuccess(String serverId, long time);
+
+        public void onError(Exception e);
+    }
+    
+    public interface SendListener {
+        public void onSuccess();
 
         public void onError(Exception e);
     }
