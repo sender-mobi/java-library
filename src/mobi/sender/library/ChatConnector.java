@@ -181,7 +181,7 @@ public class ChatConnector {
                             pw.interrupt();
                             pw.join(1000);
                         }
-                    
+                        currDids.remove(devId);
                         Log.v(TAG, "disconnected " + id);
                         if (state == State.connected) {
                             doConnect();
@@ -194,8 +194,12 @@ public class ChatConnector {
                             if (state == State.connecting) {
                                 doConnect();
                             }
+                        } else if (state == State.disconnecting) {
+                            state = State.disconnected;
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }, "stream " + id).start();
@@ -204,8 +208,6 @@ public class ChatConnector {
     public void doDisconnect() {
         state = State.disconnecting;
         cutConnection();
-        state = State.disconnected;
-        currDids.remove(devId);
     }
     
     private boolean doMessage(String data) {

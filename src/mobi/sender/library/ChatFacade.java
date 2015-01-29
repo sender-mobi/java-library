@@ -51,6 +51,7 @@ public class ChatFacade {
     public static final String CLASS_AUTH_SUCCESS = "success.auth.sender";
     public static final String CLASS_AUTH_PHONE = "phone.auth.sender";
     public static final String CLASS_AUTH_OTP = "otp.auth.sender";
+    public static final String CLASS_AUTH_IVR = "ivr.auth.sender";
     public static final String CLASS_AUTH_CONFIRM_OTHER = "confirm.auth.sender";
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
     public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
@@ -159,14 +160,31 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendSticker(String id, String chatId) {
+    public void sendSticker(String id, String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
             model.put("id", id);
             model.put("text", "sticker");
             JSONObject form2Send = getForm2Send(model, CLASS_STICKER, chatId);
-            cc.send(new SenderRequest("fsubmit",
-                    form2Send));
+            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(String data) {
+                    JSONObject jo = null;
+                    try {
+                        jo = new JSONObject(data);
+                        String serverId = jo.optString("packetId");
+                        long time = jo.optLong("time");
+                        sml.onSuccess(serverId, time);
+                    } catch (JSONException e) {
+                        sml.onError(e);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sml.onError(e);
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
