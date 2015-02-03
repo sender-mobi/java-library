@@ -34,8 +34,9 @@ public class ChatFacade {
     public static final String CLASS_READ = "read.statusrobot.sender";
     public static final String CLASS_DELIV = "deliv.statusrobot.sender";
     public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
-    public static final String CLASS_SYNC_CONTACT = "sync.contactrobot.sender";
-    public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
+    public static final String CLASS_SYNC_CONTACT = ".contactSync.sender";
+    public static final String CLASS_SET_CONTACT = ".contactSet.sender";
+    public static final String CLASS_DEL_CONTACT = ".contactDelete.sender";
     public static final String CLASS_GET_SELF_INFO = ".getSelfInfo.sender";
     public static final String CLASS_SET_SELF_INFO = ".setSelfInfo.sender";
     public static final String CLASS_SET_CHAT = "set.chatrobot.sender";
@@ -66,9 +67,10 @@ public class ChatFacade {
     public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
     public static final String CLASS_SHOP = ".worldOfTanks.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
-    public static final String CLASS_NOTIFICATION_ADD = "add.chatNotification.sender";
-    public static final String CLASS_NOTIFICATION_DEL = "del.chatNotification.sender";
-    public static final String CLASS_NOTIFICATION_LEAVE = "leave.chatNotification.sender";
+    public static final String CLASS_NOTIFICATION_ADD = ".addChatNotification.sender";
+    public static final String CLASS_NOTIFICATION_DEL = ".delChatNotification.sender";
+    public static final String CLASS_NOTIFICATION_LEAVE = ".leaveChatNotification.sender";
+    public static final String CLASS_LEAVE_CHAT = ".leaveChat.sender";
     public static final String CLASS_STICKER = ".sticker.sender";
 
     private ChatConnector cc;
@@ -236,11 +238,37 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void syncContacts(JSONArray contacts) {
+    public void syncContacts(JSONArray users) {
         try {
             JSONObject jo = new JSONObject();
-            jo.put("contacts", contacts);
+            jo.put("contactRecordList", users);
             JSONObject form2Send = getForm2Send(jo, CLASS_SYNC_CONTACT, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void updateContact(JSONObject contact) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("contactRecord", contact);
+            JSONObject form2Send = getForm2Send(model, CLASS_SET_CONTACT, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit",
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void deleteContact(String contactId) {
+        try {
+            JSONObject jo = new JSONObject();
+            jo.put("contactId", contactId);
+            JSONObject form2Send = getForm2Send(jo, CLASS_DEL_CONTACT, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
         } catch (Exception e) {
@@ -306,6 +334,17 @@ public class ChatFacade {
             e.printStackTrace();
         }
         setChat(chatId, arr);
+    }
+
+    @SuppressWarnings("unused")
+    public void leaveChat(final String chatId) {
+        JSONObject jo = new JSONObject();
+        try {
+            JSONObject form2Send = getForm2Send(jo, CLASS_LEAVE_CHAT, chatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void setChat(final String chatId, JSONArray users) {

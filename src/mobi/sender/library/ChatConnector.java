@@ -71,6 +71,7 @@ public class ChatConnector {
             @Override
             public void run() {
                 try {
+                    String key = UUID.randomUUID().toString().replace("-", "");
                     String reqUrl = url + "reg";
                     JSONObject jo = new JSONObject();
                     jo.put("imei", devId);
@@ -84,11 +85,11 @@ public class ChatConnector {
                     jo.put("versionOS", System.getProperty("os.version"));
                     jo.put("authToken", authToken);
                     jo.put("companyId", companyId);
-                    Log.v(TAG, "======> " + reqUrl + " data: " + jo.toString());
+                    Log.v(TAG, "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
                     HttpPost post = new HttpPost(reqUrl);
                     post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                     String rResp = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
-                    Log.v(TAG, "<------: " + rResp);
+                    Log.v(TAG, "<------: " + rResp + "(" + key + ")");
                     JSONObject rjo = new JSONObject(rResp);
                     if (!rjo.has("sid") || !rjo.has("chat_id")) {
                         throw new Exception("invalid response: " + rResp);
@@ -302,7 +303,18 @@ public class ChatConnector {
                             resp = EntityUtils.toString(httpClient.execute(get).getEntity());
                         }
                         Log.v(TAG, "<------ " + resp + " (" + request.getId() + ")");
-                        request.response(resp);
+                        try {
+                            JSONObject jo = new JSONObject(resp);
+                            if (CODE_NOT_REGISTERED.equalsIgnoreCase(jo.optString("code"))) {
+                                queue.add(request);
+                                doReg();
+                                return;
+                            }
+                            request.response(resp);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            request.error(e);
+                        }
                     }
                 } catch (OutOfMemoryError e) {
                     e.printStackTrace();
