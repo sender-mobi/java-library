@@ -10,10 +10,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
@@ -32,6 +29,7 @@ public class ChatConnector {
     private State state;
     private String sid = "undef";
     public static final String CODE_NOT_REGISTERED = "4";
+    public static final String CODE_NEED_UPDATE = "8";
     private String url, devId, devModel, devType, clientVersion, authToken, companyId, TAG;
     private SenderListener sml;
     private HttpURLConnection conn;
@@ -48,12 +46,13 @@ public class ChatConnector {
                          String devModel,
                          String devType,
                          String clientVersion,
+                         int protocolVersion,
                          int number,
                          String authToken,
                          String companyId,
                          SenderListener sml) throws Exception {
         this.sid = sid;
-        this.url = url;
+        this.url = url + protocolVersion + "/";
         this.devId = devId;
         this.devModel = devModel;
         this.devType = devType;
@@ -66,6 +65,10 @@ public class ChatConnector {
     }
 
     private void doReg() {
+        if (state == State.registering) {
+            Log.v(TAG, "reg in process...");
+            return;
+        }
         state = State.registering;
         new Thread(new Runnable() {
             @Override
@@ -99,6 +102,7 @@ public class ChatConnector {
                     currDids.remove(devId);
                     doConnect();
                 } catch (Exception e) {
+                    state = State.disconnected;
                     e.printStackTrace();
                     sml.onRegError(e);
                 }
@@ -123,7 +127,7 @@ public class ChatConnector {
                 try {
                     conn = (HttpsURLConnection) new URL(requestURL).openConnection();
                     conn.setDoInput(true);
-                    conn.setConnectTimeout(5 * 1000);
+                    conn.setConnectTimeout(3 * 1000);
                     conn.setReadTimeout(30 * 60 * 1000);
                     conn.setRequestMethod("GET");
                     conn.connect();
@@ -227,6 +231,12 @@ public class ChatConnector {
                 doReg();
                 return false;
             }
+            if (CODE_NEED_UPDATE.equals(code)) {
+                Log.v(TAG, "need update");
+                sml.onNeedUpdate();
+                doDisconnect();
+                return false;
+            }
             sml.onData(jo);
             return true;
         } catch (JSONException e) {
@@ -310,6 +320,11 @@ public class ChatConnector {
                                 doReg();
                                 return;
                             }
+                            if (CODE_NEED_UPDATE.equalsIgnoreCase(jo.optString("code"))) {
+                                sml.onNeedUpdate();
+                                doDisconnect();
+                                return;
+                            }
                             request.response(resp);
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -381,6 +396,7 @@ public class ChatConnector {
     public interface SenderListener {
         public void onData(JSONObject jo);
         public void onReg(String sid);
+        public void onNeedUpdate();
         public void onRegError(Exception e);
     }
 
