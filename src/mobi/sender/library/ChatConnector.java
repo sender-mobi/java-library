@@ -61,7 +61,12 @@ public class ChatConnector {
         this.companyId = companyId;
         this.sml = sml;
         this.TAG = String.valueOf(number);
-        doConnect();
+        if (!currDids.contains(devId)) {
+            doConnect();
+        } else {
+            if (isAlive()) state = State.connected;
+            else cutConnection();
+        }
     }
 
     private void doReg() {
@@ -74,6 +79,7 @@ public class ChatConnector {
             @Override
             public void run() {
                 try {
+                    currDids.remove(devId);
                     String key = UUID.randomUUID().toString().replace("-", "");
                     String reqUrl = url + "reg";
                     JSONObject jo = new JSONObject();
@@ -99,8 +105,9 @@ public class ChatConnector {
                     }
                     sid = rjo.optString("sid");
                     sml.onReg(sid);
-                    currDids.remove(devId);
-                    doConnect();
+                    if (!currDids.contains(devId)) {
+                        doConnect();
+                    }
                 } catch (Exception e) {
                     state = State.disconnected;
                     e.printStackTrace();
@@ -110,10 +117,7 @@ public class ChatConnector {
         }, "reg").start();
     }
 
-    public void doConnect() throws Exception {
-        if (currDids.contains(devId)) {
-            throw new Exception("stream for " + devId + " already created!");
-        }
+    public void doConnect() {
         currDids.add(devId);
         state = State.connecting;
         final String id = UUID.randomUUID().toString().replace("-", "");
@@ -174,6 +178,7 @@ public class ChatConnector {
                 } catch (Throwable e) {
                     e.printStackTrace();
                 } finally {
+                    currDids.remove(devId);
                     try {
                         if (in != null) {
                             in.close();
@@ -186,10 +191,11 @@ public class ChatConnector {
                             pw.interrupt();
                             pw.join(1000);
                         }
-                        currDids.remove(devId);
                         Log.v(TAG, "disconnected " + id);
                         if (state == State.connected) {
-                            doConnect();
+                            if (!currDids.contains(devId)) {
+                                doConnect();
+                            }
                         } else if (state == State.connecting) {
                             try {
                                 Thread.sleep(1000);
@@ -197,7 +203,9 @@ public class ChatConnector {
                                 e.printStackTrace();
                             }
                             if (state == State.connecting) {
-                                doConnect();
+                                if (!currDids.contains(devId)) {
+                                    doConnect();
+                                }
                             }
                         } else if (state == State.disconnecting) {
                             state = State.disconnected;
@@ -211,7 +219,6 @@ public class ChatConnector {
     }
     
     public void doDisconnect() {
-        state = State.disconnecting;
         cutConnection();
     }
     
@@ -254,12 +261,15 @@ public class ChatConnector {
             @Override
             public void run() {
                 currReq = request;
+                Log.v(TAG, "while sendidng req id " + request.getId() + " state = " + state);
                 try {
                     if (state != State.connected) {
                         queue.add(request);
                         Log.v(TAG, "request " + request.getRequestURL() + " id=" + request.getId() + " delayed");
                         if (state == State.disconnected) {
-                            doConnect();
+                            if (!currDids.contains(devId)) {
+                                doConnect();
+                            }
                         }
                     } else {
                         String resp;
@@ -381,12 +391,14 @@ public class ChatConnector {
     }
 
     private void cutConnection() {
+        state = State.disconnecting;
         if (conn != null) {
             try {
                 conn.disconnect();
             } catch (Exception ignored) {}
             conn = null;
         }
+        state = State.disconnected;
     }
 
     public boolean isAlive() {

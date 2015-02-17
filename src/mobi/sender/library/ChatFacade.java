@@ -74,6 +74,7 @@ public class ChatFacade {
     public static final String CLASS_DEVICES = ".devices.sender";
     public static final String CLASS_SEND_ESCALATION = ".reqEscalation.sender";
     public static final String CLASS_IS_ONLINE = ".areYouOnline.sender";
+    public static final String CLASS_GAME_TTT = ".ticTacToe.sender";
     
     public static final int NEXT_STEP_AUTH_PHONE = 0;
     public static final int NEXT_STEP_AUTH_OTP = 1;
@@ -281,6 +282,7 @@ public class ChatFacade {
         return null;
     }
     
+    
 //    @SuppressWarnings("unused")
 //    public void checkAuth(final CheckAuthListener checkAuthListener) {
 //        try {
@@ -338,6 +340,18 @@ public class ChatFacade {
     public void callDevices() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_DEVICES, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void callTicTacToe(String chatId) {
+        try {
+            JSONObject jo = new JSONObject();
+            jo.put("cmd", "newGame");
+            JSONObject form2Send = getForm2Send(jo, CLASS_GAME_TTT, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
             e.printStackTrace();
