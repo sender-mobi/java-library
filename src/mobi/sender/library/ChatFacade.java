@@ -25,7 +25,6 @@ public class ChatFacade {
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
     public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
-    @Deprecated
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
     public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
     public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
@@ -75,12 +74,18 @@ public class ChatFacade {
     public static final String CLASS_SEND_ESCALATION = ".reqEscalation.sender";
     public static final String CLASS_IS_ONLINE = ".areYouOnline.sender";
     public static final String CLASS_GAME_TTT = ".ticTacToe.sender";
+    public static final String CLASS_ADDUSER_OFFER = "offer.addCtByUserId.sender";
+    public static final String CLASS_USER_STATE = ".userState.sender";
     
     public static final int NEXT_STEP_AUTH_PHONE = 0;
     public static final int NEXT_STEP_AUTH_OTP = 1;
     public static final int NEXT_STEP_AUTH_CONFIRM = 2;
     public static final int NEXT_STEP_AUTH_IVR = 3;
     public static final int NEXT_STEP_AUTH_END = 4;
+
+    public static final String URL_DEV = "https://api-dev.sender.mobi/";
+    public static final String URL_RC = "https://api-rc.sender.mobi/";
+    public static final String URL_PROD = "https://api.sender.mobi/";
     
     private CopyOnWriteArrayList<RespWatcher> queue = new CopyOnWriteArrayList<RespWatcher>();
     
@@ -89,7 +94,7 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, ChatConnector.SenderListener listener) throws Exception {
-        this(ChatConnector.URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, listener);
+        this(URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, listener);
     }
     
     @SuppressWarnings("unused")
@@ -635,14 +640,32 @@ public class ChatFacade {
     }
     
     @SuppressWarnings("unused")
-    public void sendLocale() {
+    public void sendLocale(String locale) {
         try {
+            if (locale == null || locale.length() == 0) locale = Locale.getDefault().getLanguage();
             JSONObject model = new JSONObject();
-            model.put("locale", Locale.getDefault().getLanguage());
+            model.put("locale", locale);
             JSONArray arr = new JSONArray();
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_LOCALE, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit",
                     form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sendState(String cat1, String cat2, String cat3, String userId, String chatId) {
+        try {
+            JSONObject model = new JSONObject();
+            model.put("cat1", cat1);
+            model.put("cat2", cat2);
+            model.put("cat3", cat3);
+            model.put("userId", userId);
+            model.put("chatId", chatId);
+            JSONArray arr = new JSONArray();
+            JSONObject form2Send = getForm2Send(model, CLASS_USER_STATE, ChatConnector.senderChatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1283,7 +1306,7 @@ public class ChatFacade {
 
     private class Monitor extends Thread {
 
-        private static final long MAX_WAIT_TIME = 20 * 1000;
+        private static final long MAX_WAIT_TIME = 60 * 1000;
 
         public Monitor() {
             super("respMonitor");

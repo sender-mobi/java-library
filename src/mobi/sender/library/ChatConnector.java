@@ -22,14 +22,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ChatConnector {
 
-    public static final String URL_DEV = "https://api-dev.sender.mobi/";
-    public static final String URL_RC = "https://api-rc.sender.mobi/";
-    public static final String URL_PROD = "https://api.sender.mobi/";
     private static enum State {registering, connecting, connected, disconnecting, disconnected}
     private State state;
     private String sid = "undef";
     public static final String CODE_NOT_REGISTERED = "4";
     public static final String CODE_NEED_UPDATE = "8";
+    public static final String CODE_CONCURRENT = "5";
     private String url, devId, devModel, devType, clientVersion, authToken, companyId, TAG;
     private SenderListener sml;
     private HttpURLConnection conn;
@@ -145,12 +143,12 @@ public class ChatConnector {
                         @Override
                         public void run() {
                             lastPingTime = System.currentTimeMillis();
-                            while (System.currentTimeMillis() - lastPingTime < 10 * 1000) {
-                                try {
+                            try {
+                                while (System.currentTimeMillis() - lastPingTime < 10 * 1000) {
                                     Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
                                 }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
                             Log.v(TAG, "ping lost! " + id);
                             cutConnection();
@@ -244,6 +242,11 @@ public class ChatConnector {
                 doDisconnect();
                 return false;
             }
+            if (CODE_CONCURRENT.equals(code)) {
+                Log.v(TAG, "concurrent!");
+                doDisconnect();
+                return false;
+            }
             sml.onData(jo);
             return true;
         } catch (JSONException e) {
@@ -269,6 +272,8 @@ public class ChatConnector {
                         if (state == State.disconnected) {
                             if (!currDids.contains(devId)) {
                                 doConnect();
+                            } else {
+                                cutConnection();
                             }
                         }
                     } else {
@@ -398,6 +403,7 @@ public class ChatConnector {
             } catch (Exception ignored) {}
             conn = null;
         }
+        currDids.remove(devId);
         state = State.disconnected;
     }
 
