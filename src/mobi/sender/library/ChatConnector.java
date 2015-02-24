@@ -10,7 +10,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
@@ -29,7 +32,7 @@ public class ChatConnector {
     public static final String CODE_NEED_UPDATE = "8";
     public static final String CODE_CONCURRENT = "5";
     private String url, devId, devModel, devType, clientVersion, authToken, companyId, TAG;
-    private SenderListener sml;
+    private ChatFacade.SenderListener sml;
     private HttpURLConnection conn;
     private long lastPingTime;
     private String jsonPart = "";
@@ -48,7 +51,7 @@ public class ChatConnector {
                          int number,
                          String authToken,
                          String companyId,
-                         SenderListener sml) throws Exception {
+                         ChatFacade.SenderListener sml) throws Exception {
         this.sid = sid;
         this.url = url + protocolVersion + "/";
         this.devId = devId;
@@ -411,11 +414,5 @@ public class ChatConnector {
         return state == State.connected;
     }
 
-    public interface SenderListener {
-        public void onData(JSONObject jo);
-        public void onReg(String sid);
-        public void onNeedUpdate();
-        public void onRegError(Exception e);
-    }
 
 }
