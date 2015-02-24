@@ -87,7 +87,7 @@ public class ChatFacade {
     public static final String AUTH_STEP_FINISH = "success";
 
     public static final String URL_DEV = "https://api-dev.sender.mobi/";
-    public static final String URL_RC = "https://api-rc.sender.mobi/";
+    public static final String URL_RC = "https://api-pre.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
     
     private CopyOnWriteArrayList<RespWatcher> queue = new CopyOnWriteArrayList<RespWatcher>();
