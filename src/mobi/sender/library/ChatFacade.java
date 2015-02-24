@@ -48,9 +48,6 @@ public class ChatFacade {
     public static final String CLASS_NOTIFY_DEL_YOU = "notify_del_you.chatrobot.sender";
     public static final String CLASS_NOTIFY_SET = "notify_set.chatrobot.sender";
     public static final String CLASS_AUTH_SUCCESS = "success.auth.sender";
-//    public static final String CLASS_AUTH_PHONE = "phone.auth.sender";
-//    public static final String CLASS_AUTH_OTP = "otp.auth.sender";
-//    public static final String CLASS_AUTH_IVR = "ivr.auth.sender";
     public static final String CLASS_AUTH_CONFIRM_OTHER = "confirm.auth.sender";
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
     public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
@@ -81,20 +78,13 @@ public class ChatFacade {
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
     public static final String AUTH_ACTION_BREAK = "break";
+    public static final String AUTH_ACTION_IVR = "ivr";
 
     public static final String AUTH_STEP_PHONE = "phone";
-    public static final String AUTH_STEP_PHONE_ERR = "phoneError";
     public static final String AUTH_STEP_OTP = "otp";
-    public static final String AUTH_STEP_OTP_ERR = "otpError";
     public static final String AUTH_STEP_CONFIRM = "confirm";
     public static final String AUTH_STEP_IVR = "ivr";
     public static final String AUTH_STEP_FINISH = "success";
-    
-//    public static final int NEXT_STEP_AUTH_PHONE = 0;
-//    public static final int NEXT_STEP_AUTH_OTP = 1;
-//    public static final int NEXT_STEP_AUTH_CONFIRM = 2;
-//    public static final int NEXT_STEP_AUTH_IVR = 3;
-//    public static final int NEXT_STEP_AUTH_END = 4;
 
     public static final String URL_DEV = "https://api-dev.sender.mobi/";
     public static final String URL_RC = "https://api-rc.sender.mobi/";
@@ -132,16 +122,6 @@ public class ChatFacade {
                 }
                 RespWatcher watcher = null;
                 try {
-//                    if (CLASS_IS_AUTH.equals(formClass)) {
-//                        watcher = getWatcher(formClass);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        JSONObject model = jo.optJSONObject("model");
-//                        boolean isAuth = model.optBoolean("auth");
-//                        ((CheckAuthListener) watcher.getListener()).onSuccess(isAuth);
-//                    } else
                     if (CLASS_INFO_USER.equalsIgnoreCase(formClass)) {
                         JSONObject model = jo.optJSONObject("model");
                         if (model == null) {
@@ -169,101 +149,6 @@ public class ChatFacade {
                             return;
                         }
                         ((ChatInfoListener)watcher.getListener()).onSuccess(model);
-//                    } else if (CLASS_AUTH_PHONE.equalsIgnoreCase(formClass)) {
-//                        if (jo.has("view") && "disable".equalsIgnoreCase(jo.optJSONObject("view").optString("state"))) return;
-//                        if (!jo.has("model")) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        watcher = getWatcher(formClass);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        if (jo.optJSONObject("model").has("phone")) {
-//                            ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                    NEXT_STEP_AUTH_PHONE
-//                                    , null
-//                                    , null);
-//                        } else if (!"ok".equalsIgnoreCase(jo.optJSONObject("model").optString("resp"))) {
-//                            ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                    NEXT_STEP_AUTH_PHONE
-//                                    , jo.optString("procId")
-//                                    , jo.optJSONObject("model").optString("code"));   
-//                        } else {
-//                            Log.v("ChatFacade", "auth_phone success");
-//                        }
-//                    } else if (CLASS_AUTH_OTP.equalsIgnoreCase(formClass)) {
-//                        if (jo.has("view") && "disable".equalsIgnoreCase(jo.optJSONObject("view").optString("state"))) return;
-//                        //  ---------------------- try close phone request
-//                        if (!jo.has("model")) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        watcher = getWatcher(CLASS_AUTH_PHONE);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                NEXT_STEP_AUTH_OTP
-//                                , jo.optString("procId")
-//                                , jo.optJSONObject("model").optString("code"));
-//                        //  ---------------------- try close otp request
-//                        watcher = getWatcher(CLASS_AUTH_OTP);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                NEXT_STEP_AUTH_OTP
-//                                , jo.optString("procId")
-//                                , jo.optJSONObject("model").optString("code"));
-//                    } else if (CLASS_AUTH_CONFIRM_OTHER.equalsIgnoreCase(formClass)) {
-//                        if (!jo.has("model")) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        //  ---------------------- try close phone request
-//                        watcher = getWatcher(CLASS_AUTH_PHONE);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                NEXT_STEP_AUTH_CONFIRM
-//                                , null
-//                                , null);
-//                    } else if (CLASS_FINISH_AUTH.equalsIgnoreCase(formClass)) {
-//                        if (!jo.has("model")) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        //  ---------------------- try close otp request
-//                        watcher = getWatcher(CLASS_AUTH_OTP);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                NEXT_STEP_AUTH_END
-//                                , null
-//                                , null);
-//                    } else if (CLASS_AUTH_IVR.equalsIgnoreCase(formClass)) {
-//                        if (!jo.has("model")) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        //  ---------------------- try close otp request
-//                        watcher = getWatcher(CLASS_AUTH_OTP);
-//                        if (watcher == null) {
-//                            listener.onData(jo);
-//                            return;
-//                        }
-//                        ((AuthNativeListener)watcher.getListener()).onSuccess(
-//                                NEXT_STEP_AUTH_IVR
-//                                , null
-//                                , null);
                     } else if (CLASS_AUTH.equalsIgnoreCase(formClass)) {
                         if (!jo.has("model")) {
                             listener.onData(jo);
@@ -817,77 +702,6 @@ public class ChatFacade {
         }
     }
     
-//    @SuppressWarnings("unused")
-//    public void nativeAuthStepPhone(final String phone, String procId, final AuthNativeListener aSpl) {
-//        try {
-//            final JSONObject model = new JSONObject();
-//            model.put("phone", phone);
-//            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_PHONE, ChatConnector.senderChatId, procId);
-//            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
-//                @Override
-//                public void onResponse(String data) {
-//                    try {
-//                        JSONObject jo = new JSONObject(data);
-//                        String serverId = jo.optString("packetId");
-//                        long time = jo.optLong("time");
-//                        queue.add(new RespWatcher(CLASS_AUTH_PHONE, model, time, serverId, aSpl));
-//                    } catch (Exception e) {
-//                        aSpl.onError(e);
-//                    }
-//                }
-//
-//                @Override
-//                public void onError(Exception e) {
-//                    aSpl.onError(e);
-//                }
-//            }));
-//        } catch (Exception e) {
-//            aSpl.onError(e);
-//        }
-//    }
-//
-//    @SuppressWarnings("unused")
-//    public void nativeAuthStepOtpIvr(String otp, String procId, boolean isIvr, final AuthNativeListener aSpl) {
-//        try {
-//            final JSONObject model = new JSONObject();
-//            model.put("password", otp);
-//            model.put("ivr", isIvr);
-//            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_OTP, ChatConnector.senderChatId, procId);
-//            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
-//                @Override
-//                public void onResponse(String data) {
-//                    try {
-//                        JSONObject jo = new JSONObject(data);
-//                        String serverId = jo.optString("packetId");
-//                        long time = jo.optLong("time");
-//                        queue.add(new RespWatcher(CLASS_AUTH_OTP, model, time, serverId, aSpl));
-//                    } catch (Exception e) {
-//                        aSpl.onError(e);
-//                    }
-//                }
-//
-//                @Override
-//                public void onError(Exception e) {
-//                    aSpl.onError(e);
-//                }
-//            }));
-//        } catch (Exception e) {
-//            aSpl.onError(e);
-//        }
-//    }
-//
-//    @SuppressWarnings("unused")
-//    public void nativeAuthStepName(String userName, String procId) {
-//        try {
-//            JSONObject model = new JSONObject();
-//            model.put("userName", userName);
-//            JSONObject form2Send = getForm2Send(model, CLASS_AUTH_SUCCESS, ChatConnector.senderChatId, procId);
-//            cc.send(new SenderRequest("fsubmit", form2Send));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-    
     @SuppressWarnings("unused")
     public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId) {
         if (icon != null) {
@@ -976,17 +790,6 @@ public class ChatFacade {
             e.printStackTrace();
         }
     }
-
-//    @SuppressWarnings("unused")
-//    public void sendIAmOnline() {
-//        try {
-//            JSONObject rjo = new JSONObject();
-//            rjo.put("sid", cc.getSid());
-//            send("i_am_online", rjo);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     @SuppressWarnings("unused")
     public void checkOnline(String[] userIdS) {
@@ -1320,10 +1123,6 @@ public class ChatFacade {
 
     // ----------------------------------------------------------------------------------------------------------------
 
-    public interface AuthNativeListener extends RespWatcher.RespListener {
-        public void onSuccess(int next, String procId, String errMsg);
-    }
-
     public interface AuthListener extends RespWatcher.RespListener {
         public void onSuccess(String step, String procId, String errMsg);
     }
@@ -1334,10 +1133,6 @@ public class ChatFacade {
     
     public interface ChatInfoListener extends RespWatcher.RespListener {
         public void onSuccess(JSONObject model);
-    }
-    
-    public interface CheckAuthListener extends RespWatcher.RespListener {
-        public void onSuccess(boolean auth);
     }
     
     public interface UploadFileListener {
@@ -1360,12 +1155,6 @@ public class ChatFacade {
 
     public interface SendFileListener {
         public void onSuccess(String serverId, long time, String className, String type, String url);
-
-        public void onError(Exception e);
-    }
-    
-    public interface CheckVersionListener {
-        public void onSuccess(int ver, String url);
 
         public void onError(Exception e);
     }
