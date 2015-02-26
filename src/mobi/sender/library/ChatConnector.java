@@ -27,7 +27,7 @@ public class ChatConnector {
 
     private static enum State {registering, connecting, connected, disconnecting, disconnected}
     private State state;
-    private String sid = "undef";
+    private String sid = ChatFacade.SID_UNDEF;
     public static final String CODE_NOT_REGISTERED = "4";
     public static final String CODE_NEED_UPDATE = "8";
     public static final String CODE_CONCURRENT = "5";
@@ -62,11 +62,15 @@ public class ChatConnector {
         this.companyId = companyId;
         this.sml = sml;
         this.TAG = String.valueOf(number);
-        if (!currDids.contains(devId)) {
-            doConnect();
+        if (ChatFacade.SID_UNDEF.equalsIgnoreCase(sid)) {
+            doReg();
         } else {
-            if (isAlive()) state = State.connected;
-            else cutConnection();
+            if (!currDids.contains(devId)) {
+                doConnect();
+            } else {
+                if (isAlive()) state = State.connected;
+                else cutConnection();
+            }
         }
     }
 
@@ -147,7 +151,7 @@ public class ChatConnector {
                         public void run() {
                             lastPingTime = System.currentTimeMillis();
                             try {
-                                while (System.currentTimeMillis() - lastPingTime < 10 * 1000) {
+                                while (System.currentTimeMillis() - lastPingTime < 30 * 1000) {
                                     Thread.sleep(1000);
                                 }
                             } catch (InterruptedException e) {

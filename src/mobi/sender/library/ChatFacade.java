@@ -90,6 +90,8 @@ public class ChatFacade {
     public static final String URL_RC = "https://api-pre.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
     
+    public static final String SID_UNDEF = "undef";
+    
     private CopyOnWriteArrayList<RespWatcher> queue = new CopyOnWriteArrayList<RespWatcher>();
     
     private ChatConnector cc;
