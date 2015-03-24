@@ -16,9 +16,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Sender API controller: requests, responses long pooling connect, ping monitoring, etc..  
@@ -40,7 +43,7 @@ public class ChatConnector {
     public static final String senderChatId = "sender";
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
     private SenderRequest currReq;
-
+    private ExecutorService e = Executors.newCachedThreadPool();
     public ChatConnector(String url,
                          String sid,
                          String devId,
@@ -80,9 +83,10 @@ public class ChatConnector {
             return;
         }
         state = State.registering;
-        new Thread(new Runnable() {
+        e.execute(new Runnable() {
             @Override
             public void run() {
+                Thread.currentThread().setName("reg");
                 try {
                     currDids.remove(devId);
                     String key = UUID.randomUUID().toString().replace("-", "");
@@ -105,7 +109,7 @@ public class ChatConnector {
                     String rResp = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
                     Log.v(TAG, "<------: " + rResp + "(" + key + ")");
                     JSONObject rjo = new JSONObject(rResp);
-                    if (!rjo.has("sid") || !rjo.has("chat_id")) {
+                    if (!rjo.has("sid")) {
                         throw new Exception("invalid response: " + rResp);
                     }
                     sid = rjo.optString("sid");
@@ -119,16 +123,17 @@ public class ChatConnector {
                     sml.onRegError(e);
                 }
             }
-        }, "reg").start();
+        });
     }
 
     public void doConnect() {
         currDids.add(devId);
         state = State.connecting;
         final String id = UUID.randomUUID().toString().replace("-", "");
-        new Thread(new Runnable() {
+        e.execute(new Runnable() {
             @Override
             public void run() {
+                Thread.currentThread().setName("stream" + id);
                 BufferedReader in = null;
                 Thread pw = null;
                 String requestURL = url + "stream?sid=" + sid;
@@ -144,7 +149,7 @@ public class ChatConnector {
                         throw new IOException("invalid http code: " + conn.getResponseCode());
                     }
                     in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                    if (state != State.connecting) throw new Exception("invalid state"); 
+                    if (state != State.connecting) throw new Exception("invalid state");
                     state = State.connected;
                     pw = new Thread(new Runnable() {
                         @Override
@@ -182,6 +187,9 @@ public class ChatConnector {
                     }
                 } catch (Throwable e) {
                     e.printStackTrace();
+                    if (e instanceof UnknownHostException) {
+                        state = State.disconnecting;
+                    }
                 } finally {
                     currDids.remove(devId);
                     try {
@@ -220,7 +228,7 @@ public class ChatConnector {
                     }
                 }
             }
-        }, "stream " + id).start();
+        });
     }
     
     public void doDisconnect() {
@@ -267,9 +275,10 @@ public class ChatConnector {
     }
 
     public void send(final SenderRequest request) {
-        new Thread(new Runnable() {
+        e.execute(new Runnable() {
             @Override
             public void run() {
+                Thread.currentThread().setName("Send");
                 currReq = request;
                 Log.v(TAG, "while sendidng req id " + request.getId() + " state = " + state);
                 try {
@@ -362,9 +371,61 @@ public class ChatConnector {
                 }
                 currReq = null;
             }
-        }, "Send").start();
+        });
     }
-    
+
+    public void sendSync(final String action, final JSONObject data, final SyncRespListener srl) {
+        try {
+            if (ChatFacade.SID_UNDEF.equalsIgnoreCase(sid)) {
+                Log.v(TAG, "not have sid: try reg...");
+                doReg();
+            }
+            try {
+                int counter = 0;
+                while (ChatFacade.SID_UNDEF.equalsIgnoreCase(sid) && counter < 300) {
+                    counter++;
+                    Thread.sleep(100);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (ChatFacade.SID_UNDEF.equalsIgnoreCase(sid)) {
+                Log.v(TAG, "not have sid: request cancelled");
+                throw new Exception("Error connection to server");
+            }
+            data.put("sid", sid);
+            e.execute(new Runnable() {
+                @Override
+                public void run() {
+                    Thread.currentThread().setName("sendSync");
+                    HttpPost post = new HttpPost(url + action);
+                    post.setEntity(new ByteArrayEntity(data.toString().getBytes()));
+                    String id = UUID.randomUUID().toString().replace("-", "");
+                    try {
+                        Log.v(TAG, "~~~~~~> " + url + action + " " + data.toString() + " (" + id + ")");
+                        DefaultHttpClient client = new DefaultHttpClient();
+                        HttpResponse response = client.execute(post);
+                        if (200 != response.getStatusLine().getStatusCode()) {
+                            throw new Exception("http code " + response.getStatusLine().getStatusCode());
+                        }
+                        String s = EntityUtils.toString(response.getEntity());
+                        Log.v(TAG, "<~~~~~~" + s + " (" + id + ")");
+                        JSONObject jo = new JSONObject(s);
+                        if (0 != jo.optInt("code")) {
+                            throw new Exception("code " + jo.optInt("code") + " reason:" + jo.optString("reason"));
+                        }
+                        srl.onResponse(new JSONObject(s));
+                    } catch (Exception e) {
+                        Log.v(TAG, "!~~~~~~" + e.getMessage() + " (" + id + ")");
+                        srl.onError(e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            srl.onError(e);
+        }
+    }
+
     public static void sendDeliv(final String url, final String packetId, String sid) {
         try {
             final JSONObject rjo = new JSONObject();
@@ -418,5 +479,8 @@ public class ChatConnector {
         return state == State.connected;
     }
 
-
+    public interface SyncRespListener {
+        public void onResponse(JSONObject jo);
+        public void onError(Exception e);
+    }
 }

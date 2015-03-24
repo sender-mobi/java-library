@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -74,6 +73,8 @@ public class ChatFacade {
     public static final String CLASS_ADDUSER_OFFER = "offer.addCtByUserId.sender";
     public static final String CLASS_USER_STATE = ".userState.sender";
     public static final String CLASS_AUTH = ".authNative.sender";
+    public static final String CLASS_GAME_WINNIE = ".winnieThePoohHoney.sender";
+    public static final String CLASS_VIBRO = ".vibro.sender";
 
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
@@ -92,10 +93,7 @@ public class ChatFacade {
     
     public static final String SID_UNDEF = "undef";
     
-    private CopyOnWriteArrayList<RespWatcher> queue = new CopyOnWriteArrayList<RespWatcher>();
-    
     private ChatConnector cc;
-    private Monitor monitor;
 
     @SuppressWarnings("unused")
     public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, SenderListener listener) throws Exception {
@@ -109,152 +107,8 @@ public class ChatFacade {
     
     @SuppressWarnings("unused")
     public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, String authToken, String companyId, final SenderListener listener) throws Exception {
-        if (monitor != null) {
-            monitor.interrupt();
-        }
-        monitor = new Monitor();
-        monitor.start();
-        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, authToken, companyId, new SenderListener() {
-            @Override
-            public void onData(JSONObject jo) {
-                String formClass = jo.optString("class");
-                if (formClass.trim().length() == 0) {
-                    listener.onData(jo);
-                    return;
-                }
-                RespWatcher watcher = null;
-                try {
-                    if (CLASS_INFO_USER.equalsIgnoreCase(formClass)) {
-                        JSONObject model = jo.optJSONObject("model");
-                        if (model == null) {
-                            listener.onData(jo);
-                            return;
-                        }
-                        watcher = getWatcher(formClass + "_" + model.optString("userId"));
-                        if (watcher == null) {
-                            listener.onData(jo);
-                            return;
-                        }
-                        String userId = model.optString("userId");
-                        String urlPhoto = model.optString("photo");
-                        String name = model.optString("name");
-                        ((UserDataListener)watcher.getListener()).onSuccess(userId, name, urlPhoto);
-                    } else if (CLASS_INFO_CHAT.equalsIgnoreCase(formClass)) {
-                        JSONObject model = jo.optJSONObject("model");
-                        if (model == null) {
-                            listener.onData(jo);
-                            return;
-                        }
-                        watcher = getWatcher(formClass + "_" + model.optString("chatId"));
-                        if (watcher == null) {
-                            listener.onData(jo);
-                            return;
-                        }
-                        ((ChatInfoListener)watcher.getListener()).onSuccess(model);
-                    } else if (CLASS_AUTH.equalsIgnoreCase(formClass)) {
-                        if (!jo.has("model")) {
-                            listener.onData(jo);
-                            return;
-                        }
-                        watcher = getWatcher(CLASS_AUTH);
-                        if (watcher == null) {
-                            listener.onData(jo);
-                            return;
-                        }
-                        JSONObject model = jo.optJSONObject("model");
-                                ((AuthListener) watcher.getListener()).onSuccess(
-                                model.optString("step")
-                                , jo.optString("procId")
-                                , model.optString("error"));
-                    }
-                    // TODO: other resp    
-                    else listener.onData(jo);
-                } catch (Exception e) {
-                    if (watcher != null) watcher.getListener().onError(e);
-                    else e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onReg(String sid) {
-                listener.onReg(sid);
-            }
-
-            @Override
-            public void onNeedUpdate() {
-                listener.onNeedUpdate();
-            }
-
-            @Override
-            public void onRegError(Exception e) {
-                listener.onRegError(e);
-            }
-        });
+        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, authToken, companyId, listener);
     }
-    
-    private RespWatcher getWatcher(String className) {
-        for (RespWatcher rw : queue) {
-            if (className.equalsIgnoreCase(rw.getClassName())) {
-                queue.remove(rw);
-                return rw;
-            }
-        }
-        return null;
-    }
-    
-    
-//    @SuppressWarnings("unused")
-//    public void checkAuth(final CheckAuthListener checkAuthListener) {
-//        try {
-//            final JSONObject form2Send = getForm2Send(null, CLASS_IS_AUTH, ChatConnector.senderChatId);
-//            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
-//                @Override
-//                public void onResponse(String data) {
-//                    try {
-//                        JSONObject jo = new JSONObject(data);
-//                        String serverId = jo.optString("packetId");
-//                        long time = jo.optLong("time");
-//                        queue.add(new RespWatcher(CLASS_IS_AUTH, form2Send, time, serverId, checkAuthListener));
-//                    } catch (Exception e) {
-//                        checkAuthListener.onError(e);
-//                    }
-//                }
-//
-//                @Override
-//                public void onError(Exception e) {
-//                    checkAuthListener.onError(e);
-//                }
-//            }));
-//        } catch (Exception e) {
-//            checkAuthListener.onError(e);
-//        }
-//    }
-
-//    @SuppressWarnings("unused")
-//    public void checkVersion(final CheckVersionListener cvl) {
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    int ver = -1;
-//                    String url = null;
-//                    Log.v(cc.getTAG(), "====> " + ChatConnector.URL_PROD + "get_version");
-//                    String s = EntityUtils.toString(new DefaultHttpClient().execute(new HttpGet(ChatConnector.URL_PROD + "get_version")).getEntity());
-//                    Log.v(cc.getTAG(), "<---- " + s);
-//                    JSONObject jo = new JSONObject(s);
-//                    if (jo.has("android_version")) {
-//                        ver = jo.optInt("android_version");
-//                    }
-//                    if (jo.has("android")) {
-//                        url = jo.optString("android");
-//                    }
-//                    cvl.onSuccess(ver, url);
-//                } catch (Exception e) {
-//                    cvl.onError(e);
-//                }
-//            }
-//        }).start();
-//    }
 
     @SuppressWarnings("unused")
     public void callDevices() {
@@ -272,6 +126,17 @@ public class ChatFacade {
             JSONObject jo = new JSONObject();
             jo.put("cmd", "newGame");
             JSONObject form2Send = getForm2Send(jo, CLASS_GAME_TTT, chatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void callWinnie(String chatId) {
+        try {
+            JSONObject jo = new JSONObject();
+            JSONObject form2Send = getForm2Send(jo, CLASS_GAME_WINNIE, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -386,14 +251,57 @@ public class ChatFacade {
         }
     }
 
+    public void sendShareLocation(String lat, String lon, String text, String chatId, final SendMsgListener sml) {
+        sendIAmHere(lat, lon, text, "", chatId, sml);
+    }
+
     @SuppressWarnings("unused")
-    public void syncContacts(JSONArray users) {
+    public void sendVibro(String chatId, boolean isBegin) {
+        try {
+            JSONObject jo = new JSONObject();
+            jo.put("oper", isBegin ? "begin" : "end");
+            JSONObject form2Send = getForm2Send(jo, CLASS_VIBRO, chatId);
+            cc.send(new SenderRequest("fsubmit", form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void syncContacts(JSONArray users, final JsonRespListener scl) {
         try {
             JSONObject jo = new JSONObject();
             jo.put("contactRecordList", users);
-            JSONObject form2Send = getForm2Send(jo, CLASS_SYNC_CONTACT, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
-                    form2Send));
+            cc.sendSync("sync_ct", jo, new ChatConnector.SyncRespListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    scl.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    scl.onError(e);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void syncDialogs(final JsonRespListener scl) {
+        try {
+            cc.sendSync("sync_dlg", new JSONObject(), new ChatConnector.SyncRespListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    scl.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    scl.onError(e);
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -448,41 +356,38 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void createChat(String userId) {
-        addToChat(null, userId);
+    public void addToChat(final String chatId, String userId, JsonRespListener listener) {
+        addToChat(chatId, new String[]{userId}, listener);
     }
 
-    public void addToChat(final String chatId, String userId) {
-        addToChat(chatId, new String[]{userId});
-    }
-
-    public void addToChat(final String chatId, String[] userIds) {
+    @SuppressWarnings("unused")
+    public void addToChat(final String chatId, String[] userIds, JsonRespListener listener) {
         JSONArray arr = new JSONArray();
         try {
             for (String s : userIds) {
                 JSONObject jo = new JSONObject();
-                jo.put("id", s);
+                jo.put("userId", s);
                 jo.put("cmd", "add");
                 arr.put(jo);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        setChat(chatId, arr);
+        setChat(chatId, arr, listener);
     }
 
     @SuppressWarnings("unused")
-    public void delFromChat(final String chatId, String userId) {
+    public void delFromChat(final String chatId, String userId, JsonRespListener listener) {
         JSONArray arr = new JSONArray();
         try {
             JSONObject jo = new JSONObject();
-            jo.put("id", userId);
+            jo.put("userId", userId);
             jo.put("cmd", "del");
             arr.put(jo);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        setChat(chatId, arr);
+        setChat(chatId, arr, listener);
     }
 
     @SuppressWarnings("unused")
@@ -496,14 +401,23 @@ public class ChatFacade {
         }
     }
 
-    private void setChat(final String chatId, JSONArray users) {
+    private void setChat(final String chatId, JSONArray users, final JsonRespListener listener) {
         try {
             JSONObject model = new JSONObject();
-            model.put("users", users);
+            model.put("members", users);
             model.put("chatId", chatId);
-            JSONObject form2Send = getForm2Send(model, CLASS_SET_CHAT, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
-                    form2Send));
+            cc.sendSync("chat_set", model, new ChatConnector.SyncRespListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    if (listener != null) listener.onSuccess(jo.optJSONObject("chatInfo"));
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (listener != null) listener.onError(e);
+                    else e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -540,13 +454,13 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendEscalation(RespWatcher rw) {
+    public void sendEscalation(String className, String packedId, String timeReq, JSONObject reqModel) {
         try {
             JSONObject model = new JSONObject();
-            model.put("class", rw.getClassName());
-            model.put("packetId", rw.getPacketId());
-            model.put("timeReq", rw.getSended());
-            model.put("model", rw.getModel());
+            model.put("class", className);
+            model.put("packetId", packedId);
+            model.put("timeReq", timeReq);
+            model.put("model", reqModel);
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_ESCALATION, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
@@ -629,34 +543,34 @@ public class ChatFacade {
         }
     }
     
-    @SuppressWarnings("unused")
-    public void getUserData(final String userId, final UserDataListener udl) {
-        try {
-            JSONObject model = new JSONObject();
-            model.put("userId", userId);
-            JSONObject jo = getForm2Send(model, CLASS_INFO_USER, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
-                @Override
-                public void onResponse(String data) {
-                    try {
-                        JSONObject jo = new JSONObject(data);
-                        String serverId = jo.optString("packetId");
-                        long time = jo.optLong("time");
-                        queue.add(new RespWatcher(CLASS_INFO_USER + "_" + userId, jo, time, serverId, udl));
-                    } catch (Exception e) {
-                        udl.onError(e);
-                    }
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    udl.onError(e);
-                }
-            }));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    @SuppressWarnings("unused")
+//    public void getUserData(final String userId, final UserDataListener udl) {
+//        try {
+//            JSONObject model = new JSONObject();
+//            model.put("userId", userId);
+//            JSONObject jo = getForm2Send(model, CLASS_INFO_USER, ChatConnector.senderChatId);
+//            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
+//                @Override
+//                public void onResponse(String data) {
+//                    try {
+//                        JSONObject jo = new JSONObject(data);
+//                        String serverId = jo.optString("packetId");
+//                        long time = jo.optLong("time");
+//                        queue.add(new RespWatcher(CLASS_INFO_USER + "_" + userId, jo, time, serverId, udl));
+//                    } catch (Exception e) {
+//                        udl.onError(e);
+//                    }
+//                }
+//
+//                @Override
+//                public void onError(Exception e) {
+//                    udl.onError(e);
+//                }
+//            }));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     @SuppressWarnings("unused")
     public void sendToken(final String token) {
@@ -674,31 +588,26 @@ public class ChatFacade {
     public void nativeAuth(final String action, final String value, final String procId, final AuthListener al) {
         try {
             final JSONObject model = new JSONObject();
+            final String url;
             if (AUTH_ACTION_PHONE.equalsIgnoreCase(action)) {
                 model.put("phone", value);
             } else if (AUTH_ACTION_OTP.equalsIgnoreCase(action)) {
                 model.put("otp", value);
             }
-            model.put("action", action);
-            JSONObject form2Send = getForm2Send(model, CLASS_AUTH, ChatConnector.senderChatId, procId);
-            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+            cc.sendSync("auth_" + action, model, new ChatConnector.SyncRespListener() {
                 @Override
-                public void onResponse(String data) {
-                    try {
-                        JSONObject jo = new JSONObject(data);
-                        String serverId = jo.optString("packetId");
-                        long time = jo.optLong("time");
-                        queue.add(new RespWatcher(CLASS_AUTH, model, time, serverId, al));
-                    } catch (Exception e) {
-                        al.onError(e);
-                    }
+                public void onResponse(JSONObject jo) {
+                    al.onSuccess(
+                        jo.optString("step")
+                        , jo.optString("procId")
+                        , jo.optString("error"));
                 }
 
                 @Override
                 public void onError(Exception e) {
                     al.onError(e);
                 }
-            }));
+            });
         } catch (Exception e) {
             al.onError(e);
         }
@@ -755,27 +664,21 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void getChatInfo(final String chatId, final ChatInfoListener cil) {
+    public void getChatInfo(final String chatId, final JsonRespListener cil) {
         try {
-            JSONObject jo = getForm2Send(null, CLASS_INFO_CHAT, chatId);
-            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
+            JSONObject jo = new JSONObject();
+            jo.put("chatId", chatId);
+            cc.sendSync("chat_info", jo, new ChatConnector.SyncRespListener() {
                 @Override
-                public void onResponse(String data) {
-                    try {
-                        JSONObject jo = new JSONObject(data);
-                        String serverId = jo.optString("packetId");
-                        long time = jo.optLong("time");
-                        queue.add(new RespWatcher(CLASS_INFO_CHAT + "_" + chatId, jo, time, serverId, cil));
-                    } catch (Exception e) {
-                        cil.onError(e);
-                    }
+                public void onResponse(JSONObject jo) {
+                    cil.onSuccess(jo);
                 }
 
                 @Override
                 public void onError(Exception e) {
                     cil.onError(e);
                 }
-            }));
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1065,13 +968,14 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void setMySelfData(final String name, final InputStream icon, final String type, final String description) {
+    public void setMySelfData(final String name, final InputStream icon, final String type, final String description, final UploadFileListener ufl) {
         try {
             if (icon != null && icon.available() > 0) {
                 uploadFile(icon, type, new UploadFileListener() {
 
                     @Override
                     public void onSuccess(String url) {
+                        if (ufl != null) ufl.onSuccess(url);
                         sendMySelfData(url, name, description);
                     }
 
@@ -1125,39 +1029,32 @@ public class ChatFacade {
 
     // ----------------------------------------------------------------------------------------------------------------
 
-    public interface AuthListener extends RespWatcher.RespListener {
-        public void onSuccess(String step, String procId, String errMsg);
-    }
-    
-    public interface UserDataListener extends RespWatcher.RespListener {
-        public void onSuccess(String userId, String name, String photoUrl);
-    }
-    
-    public interface ChatInfoListener extends RespWatcher.RespListener {
+
+    public interface JsonRespListener extends RespListener {
         public void onSuccess(JSONObject model);
     }
-    
-    public interface UploadFileListener {
+
+    public interface AuthListener extends RespListener {
+        public void onSuccess(String step, String procId, String errMsg);
+    }
+
+    public interface UploadFileListener extends RespListener {
         public void onSuccess(String url);
-
-        public void onError(Exception e);
     }
 
-    public interface SendMsgListener {
+    public interface SendMsgListener extends RespListener {
         public void onSuccess(String serverId, long time);
-
-        public void onError(Exception e);
     }
     
-    public interface SendListener {
+    public interface SendListener extends RespListener {
         public void onSuccess();
-
-        public void onError(Exception e);
     }
 
-    public interface SendFileListener {
+    public interface SendFileListener extends RespListener {
         public void onSuccess(String serverId, long time, String className, String type, String url);
+    }
 
+    public interface RespListener {
         public void onError(Exception e);
     }
 
@@ -1168,30 +1065,4 @@ public class ChatFacade {
         public void onRegError(Exception e);
     }
 
-    private class Monitor extends Thread {
-
-        private static final long MAX_WAIT_TIME = 60 * 1000;
-
-        public Monitor() {
-            super("respMonitor");
-        }
-
-        @Override
-        public void run() {
-            while (!isInterrupted()) {
-                try {
-                    for (RespWatcher rw : queue) {
-                        if (System.currentTimeMillis() - rw.getSended() > MAX_WAIT_TIME) {
-                            queue.remove(rw);
-                            sendEscalation(rw);
-                            rw.getListener().onTimeout();
-                        }
-                    }
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 }
