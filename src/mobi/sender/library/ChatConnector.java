@@ -356,7 +356,7 @@ public class ChatConnector {
                                 doDisconnect();
                                 return;
                             }
-                            request.response(resp);
+                            request.response(jo);
                         } catch (JSONException e) {
                             e.printStackTrace();
                             request.error(e);
@@ -374,7 +374,7 @@ public class ChatConnector {
         });
     }
 
-    public void sendSync(final String action, final JSONObject data, final SyncRespListener srl) {
+    public void sendSync(final String action, final JSONObject data, final SenderRequest.HttpDataListener srl) {
         try {
             if (ChatFacade.SID_UNDEF.equalsIgnoreCase(sid)) {
                 Log.v(TAG, "not have sid: try reg...");
@@ -479,8 +479,4 @@ public class ChatConnector {
         return state == State.connected;
     }
 
-    public interface SyncRespListener {
-        public void onResponse(JSONObject jo);
-        public void onError(Exception e);
-    }
 }

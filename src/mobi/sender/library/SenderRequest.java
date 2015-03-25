@@ -60,8 +60,8 @@ public class SenderRequest {
         this.postData = postData;
     }
 
-    public void response(String data) {
-        if (hdl!=null) hdl.onResponse(data);
+    public void response(JSONObject jo) {
+        if (hdl!=null) hdl.onResponse(jo);
     }
 
     public void error(Exception e) {
@@ -74,8 +74,7 @@ public class SenderRequest {
     }
 
     public interface HttpDataListener {
-        public void onResponse(String data);
-
+        public void onResponse(JSONObject data);
         public void onError(Exception e);
     }
 }

@@ -1,7 +1,6 @@
 package mobi.sender.library;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
@@ -184,14 +183,12 @@ public class ChatFacade {
             JSONObject form2Send = getForm2Send(model, CLASS_STICKER, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(String data) {
-                    JSONObject jo = null;
+                public void onResponse(JSONObject jo) {
                     try {
-                        jo = new JSONObject(data);
                         String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sml.onSuccess(serverId, time);
-                    } catch (JSONException e) {
+                    } catch (Exception e) {
                         sml.onError(e);
                     }
                 }
@@ -216,13 +213,12 @@ public class ChatFacade {
         JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
         cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
             @Override
-            public void onResponse(String resp) {
+            public void onResponse(JSONObject jo) {
                 try {
-                    JSONObject jo = new JSONObject(resp);
                     String serverId = jo.optString("packetId");
                     long time = jo.optLong("time");
                     sml.onSuccess(serverId, time);
-                } catch (JSONException e) {
+                } catch (Exception e) {
                     sml.onError(e);
                 }
             }
@@ -272,7 +268,7 @@ public class ChatFacade {
         try {
             JSONObject jo = new JSONObject();
             jo.put("contactRecordList", users);
-            cc.sendSync("sync_ct", jo, new ChatConnector.SyncRespListener() {
+            cc.sendSync("sync_ct", jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     scl.onSuccess(jo);
@@ -291,7 +287,7 @@ public class ChatFacade {
     @SuppressWarnings("unused")
     public void syncDialogs(final JsonRespListener scl) {
         try {
-            cc.sendSync("sync_dlg", new JSONObject(), new ChatConnector.SyncRespListener() {
+            cc.sendSync("sync_dlg", new JSONObject(), new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     scl.onSuccess(jo);
@@ -406,7 +402,7 @@ public class ChatFacade {
             JSONObject model = new JSONObject();
             model.put("members", users);
             model.put("chatId", chatId);
-            cc.sendSync("chat_set", model, new ChatConnector.SyncRespListener() {
+            cc.sendSync("chat_set", model, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     if (listener != null) listener.onSuccess(jo.optJSONObject("chatInfo"));
@@ -439,7 +435,7 @@ public class ChatFacade {
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_MONITORING, ChatConnector.senderChatId);
             cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(String data) {
+                public void onResponse(JSONObject data) {
                     sl.onSuccess();
                 }
 
@@ -522,13 +518,12 @@ public class ChatFacade {
                     , new SenderRequest.HttpDataListener() {
 
                 @Override
-                public void onResponse(String resp) {
+                public void onResponse(JSONObject jo) {
                     try {
-                        JSONObject jo = new JSONObject(resp);
                         String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sml.onSuccess(serverId, time);
-                    } catch (JSONException e) {
+                    } catch (Exception e) {
                         sml.onError(e);
                     }
                 }
@@ -594,7 +589,7 @@ public class ChatFacade {
             } else if (AUTH_ACTION_OTP.equalsIgnoreCase(action)) {
                 model.put("otp", value);
             }
-            cc.sendSync("auth_" + action, model, new ChatConnector.SyncRespListener() {
+            cc.sendSync("auth_" + action, model, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     al.onSuccess(
@@ -652,10 +647,12 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendRead(final String packetId, final String chatId) {
+    public void sendRead(final String[] packetIdS, final String chatId) {
         try {
             JSONObject model = new JSONObject();
-            model.put("packetId", packetId);
+            JSONArray is = new JSONArray();
+            for (String s : packetIdS) is.put(s);
+            model.put("packetIds", is);
             JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send));
         } catch (Exception e) {
@@ -668,7 +665,7 @@ public class ChatFacade {
         try {
             JSONObject jo = new JSONObject();
             jo.put("chatId", chatId);
-            cc.sendSync("chat_info", jo, new ChatConnector.SyncRespListener() {
+            cc.sendSync("chat_info", jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     cil.onSuccess(jo);
@@ -744,9 +741,8 @@ public class ChatFacade {
             JSONObject form2Send = getForm2Send(model, CLASS_SHARE_LOCATION, chatId);
             cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(String data) {
+                public void onResponse(JSONObject jo) {
                     try {
-                        JSONObject jo = new JSONObject(data);
                         String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sml.onSuccess(serverId, time);
@@ -888,9 +884,8 @@ public class ChatFacade {
                 new SenderRequest.HttpDataListener() {
 
                     @Override
-                    public void onResponse(String resp) {
+                    public void onResponse(JSONObject jo) {
                         try {
-                            JSONObject jo = new JSONObject(resp);
                             ufl.onSuccess(jo.optString("url"));
                         } catch (Exception e) {
                             ufl.onError(e);
@@ -919,9 +914,8 @@ public class ChatFacade {
             final JSONObject jo = getForm2Send(model, className, chatId);
             cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(String data) {
+                public void onResponse(JSONObject jo) {
                     try {
-                        JSONObject jo = new JSONObject(data);
                         String serverId = jo.optString("packetId");
                         long time = jo.optLong("time");
                         sfl.onSuccess(serverId, time, className, type, url);
