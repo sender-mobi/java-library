@@ -89,10 +89,14 @@ public class ChatFacade {
     public static final String URL_DEV = "https://api-dev.sender.mobi/";
     public static final String URL_RC = "https://api-pre.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
+    public static final String URL_PROD_FAST = "https://mobapi.sender.mobi/";
+
+    public static final String URL_FORM = "fsubmit";
     
     public static final String SID_UNDEF = "undef";
     
     private ChatConnector cc;
+//    private ChatDispatcher cc;
 
     @SuppressWarnings("unused")
     public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, SenderListener listener) throws Exception {
@@ -107,13 +111,14 @@ public class ChatFacade {
     @SuppressWarnings("unused")
     public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, String authToken, String companyId, final SenderListener listener) throws Exception {
         this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, authToken, companyId, listener);
+//        this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, listener);
     }
 
     @SuppressWarnings("unused")
     public void callDevices() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_DEVICES, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -125,7 +130,7 @@ public class ChatFacade {
             JSONObject jo = new JSONObject();
             jo.put("cmd", "newGame");
             JSONObject form2Send = getForm2Send(jo, CLASS_GAME_TTT, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -136,7 +141,7 @@ public class ChatFacade {
         try {
             JSONObject jo = new JSONObject();
             JSONObject form2Send = getForm2Send(jo, CLASS_GAME_WINNIE, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -146,7 +151,7 @@ public class ChatFacade {
     public void callWallet() {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_WALLET, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
+            cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -157,7 +162,7 @@ public class ChatFacade {
     public void callSetChatInfo(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SET_CHAT_INFO, chatId);
-            cc.send(new SenderRequest("fsubmit",
+            cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -168,7 +173,7 @@ public class ChatFacade {
     public void callShop(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SHOP, chatId);
-            cc.send(new SenderRequest("fsubmit",
+            cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -181,7 +186,7 @@ public class ChatFacade {
             JSONObject model = new JSONObject();
             model.put("id", id);
             JSONObject form2Send = getForm2Send(model, CLASS_STICKER, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     try {
@@ -211,7 +216,7 @@ public class ChatFacade {
     @SuppressWarnings("unused")
     public void sendForm(JSONObject model, String className, String chatId, String procId, final SendMsgListener sml) {
         JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
-        cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+        cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
             @Override
             public void onResponse(JSONObject jo) {
                 try {
@@ -233,7 +238,7 @@ public class ChatFacade {
     private void send(JSONObject model, String className, String chatId, String procId) {
         try {
             JSONObject form2Send = getForm2Send(model, className, chatId == null ? ChatConnector.senderChatId : chatId, procId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -252,12 +257,28 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendVibro(String chatId, boolean isBegin) {
+    public void sendVibro(String chatId, boolean isBegin, final SendMsgListener sml) {
         try {
             JSONObject jo = new JSONObject();
             jo.put("oper", isBegin ? "begin" : "end");
             JSONObject form2Send = getForm2Send(jo, CLASS_VIBRO, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    try {
+                        String serverId = jo.optString("packetId");
+                        long time = jo.optLong("time");
+                        sml.onSuccess(serverId, time);
+                    } catch (Exception e) {
+                        sml.onError(e);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sml.onError(e);
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -309,7 +330,7 @@ public class ChatFacade {
             JSONObject model = new JSONObject();
             model.put("contactRecord", contact);
             JSONObject form2Send = getForm2Send(model, CLASS_SET_CONTACT, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
+            cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -322,7 +343,7 @@ public class ChatFacade {
             JSONObject jo = new JSONObject();
             jo.put("contactId", contactId);
             JSONObject form2Send = getForm2Send(jo, CLASS_DEL_CONTACT, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
+            cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {
             e.printStackTrace();
@@ -333,7 +354,7 @@ public class ChatFacade {
     public void sendAlert(final String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_ALERT, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -345,7 +366,7 @@ public class ChatFacade {
             JSONObject model = new JSONObject();
             model.put("qrCode", qr);
             JSONObject form2Send = getForm2Send(model, CLASS_QRCODE, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -391,7 +412,7 @@ public class ChatFacade {
         JSONObject jo = new JSONObject();
         try {
             JSONObject form2Send = getForm2Send(jo, CLASS_LEAVE_CHAT, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -433,7 +454,7 @@ public class ChatFacade {
             }
             model.put("apps", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_MONITORING, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject data) {
                     sl.onSuccess();
@@ -458,7 +479,7 @@ public class ChatFacade {
             model.put("timeReq", timeReq);
             model.put("model", reqModel);
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_ESCALATION, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -472,8 +493,7 @@ public class ChatFacade {
             model.put("locale", locale);
             JSONArray arr = new JSONArray();
             JSONObject form2Send = getForm2Send(model, CLASS_SEND_LOCALE, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit",
-                    form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -490,7 +510,7 @@ public class ChatFacade {
             model.put("chatId", chatId);
             JSONArray arr = new JSONArray();
             JSONObject form2Send = getForm2Send(model, CLASS_USER_STATE, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -500,8 +520,7 @@ public class ChatFacade {
     public void callCompany(String chatId, String compUserId) {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), ".contact."+compUserId, chatId);
-
-            cc.send(new SenderRequest("fsubmit", jo));
+            cc.send(new SenderRequest(URL_FORM, jo));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -513,9 +532,7 @@ public class ChatFacade {
             JSONObject model = new JSONObject();
             model.put("text", text);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
-            cc.send(new SenderRequest("fsubmit",
-                    form2Send
-                    , new SenderRequest.HttpDataListener() {
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
 
                 @Override
                 public void onResponse(JSONObject jo) {
@@ -544,7 +561,7 @@ public class ChatFacade {
 //            JSONObject model = new JSONObject();
 //            model.put("userId", userId);
 //            JSONObject jo = getForm2Send(model, CLASS_INFO_USER, ChatConnector.senderChatId);
-//            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
+//            cc.send(new SenderRequest(URL_FORM, jo, new SenderRequest.HttpDataListener() {
 //                @Override
 //                public void onResponse(String data) {
 //                    try {
@@ -621,7 +638,7 @@ public class ChatFacade {
                         model.put("chatDesc", desc);
                         model.put("chatPhoto", url);
                         model.put("chatId", chatId);
-                        cc.send(new SenderRequest("fsubmit", getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
+                        cc.send(new SenderRequest(URL_FORM, getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -638,7 +655,7 @@ public class ChatFacade {
                 model.put("chatName", name);
                 model.put("chatDesc", desc);
                 model.put("chatId", chatId);
-                cc.send(new SenderRequest("fsubmit", getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
+                cc.send(new SenderRequest(URL_FORM, getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -654,7 +671,7 @@ public class ChatFacade {
             for (String s : packetIdS) is.put(s);
             model.put("packetIds", is);
             JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -702,7 +719,7 @@ public class ChatFacade {
             for (String s : userIdS) arr.put(s);
             model.put("userIds", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_CHECK_ONLINE, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -724,7 +741,7 @@ public class ChatFacade {
             }
             model.put("bleList", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_SET_LOCATION, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -739,7 +756,7 @@ public class ChatFacade {
             model.put("textMsg", message);
             model.put("preview", mapImgUrl);
             JSONObject form2Send = getForm2Send(model, CLASS_SHARE_LOCATION, chatId);
-            cc.send(new SenderRequest("fsubmit", form2Send, new SenderRequest.HttpDataListener() {
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     try {
@@ -874,7 +891,7 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public void cancelSend() {
-        cc.cancelSend();
+//        cc.cancelSend();
     }
 
     public void uploadFile(final InputStream file, final String type, final UploadFileListener ufl) {
@@ -912,7 +929,7 @@ public class ChatFacade {
             if (length != null) model.put("length", length);
             model.put("url", url);
             final JSONObject jo = getForm2Send(model, className, chatId);
-            cc.send(new SenderRequest("fsubmit", jo, new SenderRequest.HttpDataListener() {
+            cc.send(new SenderRequest(URL_FORM, jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     try {
@@ -955,7 +972,7 @@ public class ChatFacade {
     public void callRechargePhone() {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), CLASS_RECHARGE_PHONE, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", jo));
+            cc.send(new SenderRequest(URL_FORM, jo));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -993,7 +1010,7 @@ public class ChatFacade {
             model.put("photo", url);
             model.put("description", description);
             JSONObject jo = getForm2Send(model,CLASS_SET_SELF_INFO, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", jo));
+            cc.send(new SenderRequest(URL_FORM, jo));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1003,7 +1020,7 @@ public class ChatFacade {
     public void getMySelfData() {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), CLASS_GET_SELF_INFO, ChatConnector.senderChatId);
-            cc.send(new SenderRequest("fsubmit", jo));
+            cc.send(new SenderRequest(URL_FORM, jo));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1018,7 +1035,7 @@ public class ChatFacade {
     @SuppressWarnings("unused")
     public void stop() {
         
-        cc.doDisconnect();
+        cc.end();
     }
 
     // ----------------------------------------------------------------------------------------------------------------

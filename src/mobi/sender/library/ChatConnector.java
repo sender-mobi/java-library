@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 public class ChatConnector {
 
     private static enum State {registering, connecting, connected, disconnecting, disconnected}
-    private State state;
     private String sid = ChatFacade.SID_UNDEF;
     public static final String CODE_NOT_REGISTERED = "4";
     public static final String CODE_NEED_UPDATE = "8";
@@ -44,6 +43,8 @@ public class ChatConnector {
     private CopyOnWriteArrayList<SenderRequest> queue = new CopyOnWriteArrayList<SenderRequest>();
     private SenderRequest currReq;
     private ExecutorService e = Executors.newCachedThreadPool();
+    private StateHolder sh;
+
     public ChatConnector(String url,
                          String sid,
                          String devId,
@@ -56,6 +57,7 @@ public class ChatConnector {
                          String companyId,
                          ChatFacade.SenderListener sml) throws Exception {
         this.sid = sid;
+        sh = new StateHolder();
         this.url = url + protocolVersion + "/";
         this.devId = devId;
         this.devModel = devModel;
@@ -71,18 +73,18 @@ public class ChatConnector {
             if (!currDids.contains(devId)) {
                 doConnect();
             } else {
-                if (isAlive()) state = State.connected;
+                if (isAlive()) sh.setState(State.connected);
                 else cutConnection();
             }
         }
     }
 
     private void doReg() {
-        if (state == State.registering) {
+        if (sh.getState() == State.registering) {
             Log.v(TAG, "reg in process...");
             return;
         }
-        state = State.registering;
+        sh.setState(State.registering);
         e.execute(new Runnable() {
             @Override
             public void run() {
@@ -118,7 +120,7 @@ public class ChatConnector {
                         doConnect();
                     }
                 } catch (Exception e) {
-                    state = State.disconnected;
+                    sh.setState(State.disconnected);
                     e.printStackTrace();
                     sml.onRegError(e);
                 }
@@ -128,7 +130,7 @@ public class ChatConnector {
 
     public void doConnect() {
         currDids.add(devId);
-        state = State.connecting;
+        sh.setState(State.connecting);
         final String id = UUID.randomUUID().toString().replace("-", "");
         e.execute(new Runnable() {
             @Override
@@ -149,8 +151,8 @@ public class ChatConnector {
                         throw new IOException("invalid http code: " + conn.getResponseCode());
                     }
                     in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                    if (state != State.connecting) throw new Exception("invalid state");
-                    state = State.connected;
+                    if (sh.getState() != State.connecting) throw new Exception("invalid state");
+                    sh.setState(State.connected);
                     pw = new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -173,7 +175,7 @@ public class ChatConnector {
                         send(sr);
                     }
                     String nextLine;
-                    while ((nextLine = in.readLine()) != null && state == State.connected) {
+                    while ((nextLine = in.readLine()) != null && sh.getState() == State.connected) {
                         if (nextLine.trim().length() > 0) {
                             Log.v(TAG, "<======== " + nextLine + " from " + id);
                             if (!doMessage(nextLine)) {
@@ -188,7 +190,7 @@ public class ChatConnector {
                 } catch (Throwable e) {
                     e.printStackTrace();
                     if (e instanceof UnknownHostException) {
-                        state = State.disconnecting;
+                        sh.setState(State.disconnecting);
                     }
                 } finally {
                     currDids.remove(devId);
@@ -205,23 +207,23 @@ public class ChatConnector {
                             pw.join(1000);
                         }
                         Log.v(TAG, "disconnected " + id);
-                        if (state == State.connected) {
+                        if (sh.getState() == State.connected) {
                             if (!currDids.contains(devId)) {
                                 doConnect();
                             }
-                        } else if (state == State.connecting) {
+                        } else if (sh.getState() == State.connecting) {
                             try {
                                 Thread.sleep(1000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (state == State.connecting) {
+                            if (sh.getState() == State.connecting) {
                                 if (!currDids.contains(devId)) {
                                     doConnect();
                                 }
                             }
-                        } else if (state == State.disconnecting) {
-                            state = State.disconnected;
+                        } else if (sh.getState() == State.disconnecting) {
+                            sh.setState(State.disconnected);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -230,8 +232,8 @@ public class ChatConnector {
             }
         });
     }
-    
-    public void doDisconnect() {
+
+    public void end() {
         cutConnection();
     }
     
@@ -254,12 +256,12 @@ public class ChatConnector {
             if (CODE_NEED_UPDATE.equals(code)) {
                 Log.v(TAG, "need update");
                 sml.onNeedUpdate();
-                doDisconnect();
+                end();
                 return false;
             }
             if (CODE_CONCURRENT.equals(code)) {
                 Log.v(TAG, "concurrent!");
-                doDisconnect();
+                end();
                 return false;
             }
             sml.onData(jo);
@@ -280,12 +282,12 @@ public class ChatConnector {
             public void run() {
                 Thread.currentThread().setName("Send");
                 currReq = request;
-                Log.v(TAG, "while sendidng req id " + request.getId() + " state = " + state);
+                Log.v(TAG, "while sendidng req id " + request.getId() + " state = " + sh.getState());
                 try {
-                    if (state != State.connected) {
+                    if (sh.getState() != State.connected) {
                         queue.add(request);
                         Log.v(TAG, "request " + request.getRequestURL() + " id=" + request.getId() + " delayed");
-                        if (state == State.disconnected) {
+                        if (sh.getState() == State.disconnected) {
                             if (!currDids.contains(devId)) {
                                 doConnect();
                             } else {
@@ -353,7 +355,7 @@ public class ChatConnector {
                             }
                             if (CODE_NEED_UPDATE.equalsIgnoreCase(jo.optString("code"))) {
                                 sml.onNeedUpdate();
-                                doDisconnect();
+                                end();
                                 return;
                             }
                             request.response(jo);
@@ -464,7 +466,7 @@ public class ChatConnector {
     }
 
     private void cutConnection() {
-        state = State.disconnecting;
+        sh.setState(State.disconnecting);
         if (conn != null) {
             try {
                 conn.disconnect();
@@ -472,11 +474,28 @@ public class ChatConnector {
             conn = null;
         }
         currDids.remove(devId);
-        state = State.disconnected;
+        sh.setState(State.disconnected);
     }
 
     public boolean isAlive() {
-        return state == State.connected;
+        return sh.getState() == State.connected;
+    }
+
+    private class StateHolder {
+        private State state;
+        private final Object lock = new Object();
+
+        public void setState(State nState) {
+            synchronized (lock) {
+                state = nState;
+            }
+        }
+
+        public State getState() {
+            synchronized (lock) {
+                return state;
+            }
+        }
     }
 
 }
