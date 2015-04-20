@@ -31,7 +31,7 @@ public class ChatDispatcher {
     private Sender sender;
     private Comet comet;
     private String token;
-    private boolean alive;
+    private String cometId;
 
     private ChatDispatcher(String url,
                          String masterKey,
@@ -74,7 +74,7 @@ public class ChatDispatcher {
     }
 
     public void end() {
-        setAlive(false);
+        setCometId(null);
         comet.interrupt();
     }
     
@@ -112,12 +112,14 @@ public class ChatDispatcher {
         sml.onData(jo);
     }
 
-    public synchronized boolean isAlive() {
-        return alive;
+    public synchronized String getCometId() {
+        Log.v(TAG, "getCometId: "+ cometId);
+        return cometId;
     }
 
-    public synchronized void setAlive(boolean alive) {
-        this.alive = alive;
+    public synchronized void setCometId(String cometId) {
+        Log.v(TAG, "setCometId: "+ cometId);
+        this.cometId = cometId;
     }
 
     public static String hmacDigest(String msg, String keyString, String algo) {
@@ -165,15 +167,17 @@ public class ChatDispatcher {
     }
 
     private void startComet() {
-        if (!isAlive()) {
-            setAlive(true);
+        if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
             comet = new Comet(this, url);
+            setCometId(comet.getCometId());
             comet.start();
         } else {
             Log.v(TAG, "comet already running");
         }
     }
+
+
 
     public boolean checkResp(JSONObject rjo, List<SenderRequest> toSend, SenderRequest request) {
         if (ChatDispatcher.CODE_OK.equalsIgnoreCase(rjo.optString("code"))) return true;
@@ -193,5 +197,9 @@ public class ChatDispatcher {
             end();
         }
         return false;
+    }
+
+    public boolean isAlive() {
+        return getCometId() != null;
     }
 }

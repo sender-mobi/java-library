@@ -27,11 +27,19 @@ public class Comet extends Thread {
         this.url = url;
     }
 
+    public String getCometId() {
+        return id;
+    }
+
     @Override
     public void run() {
         Log.v(ChatDispatcher.TAG, "comet started id = " + id);
         try {
-            while (disp.isAlive()) {
+            while (disp.getCometId() != null) {
+                if (!id.equalsIgnoreCase(disp.getCometId())) {
+                    Log.v(ChatDispatcher.TAG, "duplicate comet: my id = " + id + " active = " + disp.getCometId());
+                    return;
+                }
                 while (ChatFacade.SID_UNDEF.equalsIgnoreCase(disp.getMasterKey())) {
                     Log.v(ChatDispatcher.TAG, "need reg... wait comet");
                     sleep(1000);
@@ -64,6 +72,7 @@ public class Comet extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        disp.setCometId(null);
         Log.v(ChatDispatcher.TAG, "comet ending id = " + id);
     }
 }

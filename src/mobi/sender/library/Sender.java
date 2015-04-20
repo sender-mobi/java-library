@@ -114,7 +114,7 @@ public class Sender implements Runnable {
                 rjo = new JSONObject(response);
             } catch (Exception e) {
                 e.printStackTrace();
-
+                for (SenderRequest sr : toSend) send(sr);
             }
             if (rjo != null && disp.checkResp(rjo, toSend, null)) {
                 if (rjo.has("cr")) {
@@ -141,9 +141,10 @@ public class Sender implements Runnable {
         synchronized (lock) {
             sending = false;
         }
-        Log.v(ChatDispatcher.TAG, "stopped!");
         if (queue.size() > 0) {
             tryStart();
+        } else {
+            Log.v(ChatDispatcher.TAG, "sender stopped!");
         }
     }
     

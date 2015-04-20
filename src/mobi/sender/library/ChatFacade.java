@@ -27,8 +27,8 @@ public class ChatFacade {
     public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
     public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
     public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
-    public static final String CLASS_READ = "read.statusrobot.sender";
-    public static final String CLASS_DELIV = "deliv.statusrobot.sender";
+    public static final String CLASS_READ = ".read.sender";
+    public static final String CLASS_DELIV = ".deliv.sender";
     public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
     public static final String CLASS_SYNC_CONTACT = ".contactSync.sender";
     public static final String CLASS_SET_CONTACT = ".contactSet.sender";
@@ -95,8 +95,8 @@ public class ChatFacade {
     
     public static final String SID_UNDEF = "undef";
     
-    private ChatConnector cc;
-//    private ChatDispatcher cc;
+//    private ChatConnector cc;
+    private ChatDispatcher cc;
 
     @SuppressWarnings("unused")
     public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, SenderListener listener) throws Exception {
@@ -110,8 +110,8 @@ public class ChatFacade {
     
     @SuppressWarnings("unused")
     public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, String authToken, String companyId, final SenderListener listener) throws Exception {
-        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, authToken, companyId, listener);
-//        this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, listener);
+//        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, authToken, companyId, listener);
+        this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, listener);
     }
 
     @SuppressWarnings("unused")
@@ -664,12 +664,11 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendRead(final String[] packetIdS, final String chatId) {
+    public void sendRead(final String packetId, String from, final String chatId) {
         try {
             JSONObject model = new JSONObject();
-            JSONArray is = new JSONArray();
-            for (String s : packetIdS) is.put(s);
-            model.put("packetIds", is);
+            model.put("packetId", packetId);
+            model.put("from", from);
             JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
             cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
