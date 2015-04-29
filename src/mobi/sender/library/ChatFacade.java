@@ -37,7 +37,7 @@ public class ChatFacade {
     public static final String CLASS_SET_SELF_INFO = ".setSelfInfo.sender";
     public static final String CLASS_SET_CHAT = "set.chatrobot.sender";
     public static final String CLASS_PUSH = "push.pushrobot.sender";
-    public static final String CLASS_CHECK_ONLINE = "check.status.sender";
+    public static final String CLASS_CHECK_ONLINE = ".checkUserStatus.sender";
     public static final String CLASS_SET_LOCATION = ".setDeviceLocation.sender";
     public static final String CLASS_SHARE_LOCATION = ".shareMyLocation.sender";
     public static final String CLASS_WALLET = ".wallet.sender";
@@ -99,19 +99,20 @@ public class ChatFacade {
     private ChatDispatcher cc;
 
     @SuppressWarnings("unused")
-    public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, SenderListener listener) throws Exception {
-        this(URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, listener);
+    public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
+        this(URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, SenderListener listener) throws Exception {
-        this(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, null, null, listener);
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
+        this(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, int number, String authToken, String companyId, final SenderListener listener) throws Exception {
-//        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, number, authToken, companyId, listener);
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, final SenderListener listener) throws Exception {
+//        this.cc = new ChatConnector(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, 1, authToken, companyId, listener);
         this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, listener);
+        this.cc.startComet();
     }
 
     @SuppressWarnings("unused")
@@ -626,27 +627,37 @@ public class ChatFacade {
     }
     
     @SuppressWarnings("unused")
-    public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId) {
+    public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId, final UploadFileListener ufl) {
         if (icon != null) {
             uploadFile(icon, type, new UploadFileListener() {
 
                 @Override
-                public void onSuccess(String url) {
+                public void onSuccess(final String url) {
                     try {
                         JSONObject model = new JSONObject();
                         model.put("chatName", name);
                         model.put("chatDesc", desc);
                         model.put("chatPhoto", url);
                         model.put("chatId", chatId);
-                        cc.send(new SenderRequest(URL_FORM, getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId)));
+                        cc.send(new SenderRequest(URL_FORM, getForm2Send(model, CLASS_SET_CHAT_PROFILE, ChatConnector.senderChatId), new SenderRequest.HttpDataListener() {
+                            @Override
+                            public void onResponse(JSONObject data) {
+                                ufl.onSuccess(url);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                ufl.onError(e);
+                            }
+                        }));
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        ufl.onError(e);
                     }
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    e.printStackTrace();
+                    ufl.onError(e);
                 }
             });    
         } else {
@@ -713,12 +724,20 @@ public class ChatFacade {
     public void checkOnline(String[] userIdS) {
         try {
             JSONObject model = new JSONObject();
-            model.put("force", false);
             JSONArray arr = new JSONArray();
             for (String s : userIdS) arr.put(s);
-            model.put("userIds", arr);
+            model.put("userId", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_CHECK_ONLINE, ChatConnector.senderChatId);
             cc.send(new SenderRequest(URL_FORM, form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sendOnline(String onlineKey) {
+        try {
+            cc.send(new SenderRequest("online?online_key=" + onlineKey));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -809,9 +828,9 @@ public class ChatFacade {
             if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
             if (!fname.contains(".")) throw new Exception("invalid file name");
             final String ffname = fname;
-            final String[] parts = fname.split("\\.");
+            int pos = fname.lastIndexOf(".");
+            final String extPart = fname.substring(pos+1);
             if (preview != null) {
-                
                 uploadFile(new ByteArrayInputStream(preview), "png", new UploadFileListener() {
                     @Override
                     public void onSuccess(final String previewUrl) {
@@ -819,7 +838,7 @@ public class ChatFacade {
                             sendIAmHere(lat, lon, desc, previewUrl, chatId, new SendMsgListener() {
                                 @Override
                                 public void onSuccess(String serverId, long time) {
-                                    sfl.onSuccess(serverId, time, CLASS_SHARE_LOCATION, parts[1], previewUrl);
+                                    sfl.onSuccess(serverId, time, CLASS_SHARE_LOCATION, extPart, previewUrl);
                                 }
 
                                 @Override
@@ -829,11 +848,11 @@ public class ChatFacade {
                             });
                         }
                         else {
-                            uploadFile(file, parts[1], new UploadFileListener() {
+                            uploadFile(file, extPart, new UploadFileListener() {
                                 @Override
                                 public void onSuccess(final String url) {
                                     try {
-                                        doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, previewUrl, getMediaClass(parts[1]), chatId, sfl);   
+                                        doSendFileInfo(ffname, extPart, desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, previewUrl, getMediaClass(extPart), chatId, sfl);
                                     } catch (Exception e) {
                                         sfl.onError(e);
                                     }
@@ -853,14 +872,14 @@ public class ChatFacade {
                     }
                 });
             } else {
-                uploadFile(file, parts[1], new UploadFileListener() {
+                uploadFile(file, extPart, new UploadFileListener() {
                     @Override
                     public void onSuccess(final String url) {
                         if (lat != null && lon !=null) {
                             sendIAmHere(lat, lon, desc, url, chatId, new SendMsgListener() {
                                 @Override
                                 public void onSuccess(String serverId, long time) {
-                                    sfl.onSuccess(serverId, time, CLASS_SHARE_LOCATION, parts[1], url);
+                                    sfl.onSuccess(serverId, time, CLASS_SHARE_LOCATION, extPart, url);
                                 }
 
                                 @Override
@@ -870,7 +889,7 @@ public class ChatFacade {
                             });
                         } else {
                             try {
-                                doSendFileInfo(ffname, parts[1], desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, null, getMediaClass(parts[1]), chatId, sfl);
+                                doSendFileInfo(ffname, extPart, desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, null, getMediaClass(extPart), chatId, sfl);
                             } catch (Exception e) {
                                 sfl.onError(e);
                             }
@@ -1033,7 +1052,6 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public void stop() {
-        
         cc.end();
     }
 

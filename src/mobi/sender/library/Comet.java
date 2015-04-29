@@ -1,8 +1,11 @@
 package mobi.sender.library;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,10 +24,20 @@ public class Comet extends Thread {
     private String url;
     private String lastSrvBatchId;
     private String id = UUID.randomUUID().toString().replace("-", "");
+    private DefaultHttpClient client;
 
     public Comet(ChatDispatcher disp, String url) {
         this.disp = disp;
         this.url = url;
+        client = new DefaultHttpClient();
+        client.setKeepAliveStrategy(
+                new ConnectionKeepAliveStrategy() {
+                    @Override
+                    public long getKeepAliveDuration(
+                            HttpResponse response, HttpContext context) {
+                        return 180000;
+                    }
+                });
     }
 
     public String getCometId() {
@@ -37,8 +50,7 @@ public class Comet extends Thread {
         try {
             while (disp.getCometId() != null) {
                 if (!id.equalsIgnoreCase(disp.getCometId())) {
-                    Log.v(ChatDispatcher.TAG, "duplicate comet: my id = " + id + " active = " + disp.getCometId());
-                    return;
+                    throw new Exception("duplicate comet: my id = " + id + " active = " + disp.getCometId());
                 }
                 while (ChatFacade.SID_UNDEF.equalsIgnoreCase(disp.getMasterKey())) {
                     Log.v(ChatDispatcher.TAG, "need reg... wait comet");
@@ -52,7 +64,7 @@ public class Comet extends Thread {
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
-                String response = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
+                String response = EntityUtils.toString(client.execute(post).getEntity());
                 Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                 JSONObject rjo = new JSONObject(response);
                 if (disp.checkResp(rjo, null, null)) {
@@ -65,14 +77,22 @@ public class Comet extends Thread {
                             JSONObject fsj = fs.optJSONObject(i);
                             disp.onMessage(fsj);
                         }
+                    } else {
+                        sleep(1000);
                     }
+                } else {
+                    sleep(1000);
                 }
-                sleep(1000);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         disp.setCometId(null);
         Log.v(ChatDispatcher.TAG, "comet ending id = " + id);
+    }
+
+    public void disconnect() {
+        client.getConnectionManager().shutdown();
+        interrupt();
     }
 }

@@ -3,6 +3,7 @@ package mobi.sender.library;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
@@ -55,7 +56,10 @@ public class Register extends Thread{
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
             HttpPost post = new HttpPost(reqUrl);
             post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-            String rResp = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
+            DefaultHttpClient client = new DefaultHttpClient();
+            client.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
+            client.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 10000);
+            String rResp = EntityUtils.toString(client.execute(post).getEntity());
             Log.v(this.getClass().getSimpleName(), "<======= " + rResp + "(" + key + ")");
             JSONObject rjo = new JSONObject(rResp);
             if (!rjo.has("deviceKey")) {

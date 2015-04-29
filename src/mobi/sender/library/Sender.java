@@ -1,9 +1,13 @@
 package mobi.sender.library;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,10 +37,22 @@ public class Sender implements Runnable {
     private String url;
     private static boolean sending;
     private static final Object lock = new Object();
+    DefaultHttpClient client;
 
     public Sender(ChatDispatcher disp, String url) {
         this.disp = disp;
         this.url = url;
+        client = new DefaultHttpClient();
+        client.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
+        client.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 10000);
+        client.setKeepAliveStrategy(
+                new ConnectionKeepAliveStrategy() {
+                    @Override
+                    public long getKeepAliveDuration(
+                            HttpResponse response, HttpContext context) {
+                        return 180000;
+                    }
+                });
         synchronized (lock) {
             sending = false;
         }
@@ -109,7 +125,7 @@ public class Sender implements Runnable {
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
-                String response = EntityUtils.toString(new DefaultHttpClient().execute(post).getEntity());
+                String response = EntityUtils.toString(client.execute(post).getEntity());
                 Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                 rjo = new JSONObject(response);
             } catch (Exception e) {
@@ -151,8 +167,7 @@ public class Sender implements Runnable {
     private void doSend(SenderRequest request) {
         try {
             String resp;
-            DefaultHttpClient httpClient = new DefaultHttpClient();
-            String rurl = url + request.getRequestURL() + "?udid=" + disp.getUDID() + "&token=" + disp.getToken();
+            String rurl = url + request.getRequestURL() + (request.getRequestURL().contains("?") ? "&" : "?") + "udid=" + disp.getUDID() + "&token=" + disp.getToken();
             if (request.getData() != null && request.getData().available() > 0) {                        // -------------------- binary post
                 Log.v(this.getClass().getSimpleName(), "========> " + rurl + " with binary data " + " (" + request.getId() + ")");
                 URL purl = new URL(rurl);
@@ -191,11 +206,11 @@ public class Sender implements Runnable {
                 Log.v(ChatDispatcher.TAG, "========> " + rurl + " " + request.getPostData() + " (" + request.getId() + ")");
                 HttpPost post = new HttpPost(rurl);
                 post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
-                resp = EntityUtils.toString(httpClient.execute(post).getEntity());
+                resp = EntityUtils.toString(client.execute(post).getEntity());
             } else {                                                // -------------------- get
                 Log.v(this.getClass().getSimpleName(), "========> " + rurl + " (" + request.getId() + ")");
                 HttpGet get = new HttpGet(rurl);
-                resp = EntityUtils.toString(httpClient.execute(get).getEntity());
+                resp = EntityUtils.toString(client.execute(get).getEntity());
             }
             Log.v(this.getClass().getSimpleName(), "<======= " + resp + " (" + request.getId() + ")");
                 JSONObject jo = new JSONObject(resp);

@@ -52,10 +52,7 @@ public class ChatDispatcher {
         this.UDID = hmacDigest(devId, developerKey, "HmacSHA1");
         this.url = url + protocolVersion + "/";
         this.sml = sml;
-        sender = new Sender(this, url);
-        if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey)) {
-            onNeedReg();
-        }
+        sender = new Sender(this, this.url);
     }
 
     public static ChatDispatcher getInstanse(String url,
@@ -69,13 +66,17 @@ public class ChatDispatcher {
                               String companyId,
                               ChatFacade.SenderListener sml) {
         if (instanse == null) instanse = new ChatDispatcher(url, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, sml);
+        instanse.masterKey = masterKey;
         instanse.startComet();
+        if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey)) {
+            instanse.onNeedReg();
+        }
         return instanse;
     }
 
     public void end() {
         setCometId(null);
-        comet.interrupt();
+        comet.disconnect();
     }
     
     public void send(SenderRequest request) {
@@ -166,7 +167,7 @@ public class ChatDispatcher {
         this.token = token;
     }
 
-    private void startComet() {
+    public void startComet() {
         if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
             comet = new Comet(this, url);
