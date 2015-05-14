@@ -1,4 +1,4 @@
-package mobi.sender.library;
+package com.sender.library;
 
 import org.json.JSONObject;
 

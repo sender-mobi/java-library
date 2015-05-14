@@ -1,4 +1,4 @@
-package mobi.sender.library;
+package com.sender.library;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;

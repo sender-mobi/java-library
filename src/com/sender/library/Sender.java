@@ -1,4 +1,4 @@
-package mobi.sender.library;
+package com.sender.library;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -205,11 +205,13 @@ public class Sender implements Runnable {
             } else if (request.getPostData() != null) {             // -------------------- post
                 Log.v(ChatDispatcher.TAG, "========> " + rurl + " " + request.getPostData() + " (" + request.getId() + ")");
                 HttpPost post = new HttpPost(rurl);
+                post.addHeader("Accept-Encoding", "gzip");
                 post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
                 resp = EntityUtils.toString(client.execute(post).getEntity());
             } else {                                                // -------------------- get
                 Log.v(this.getClass().getSimpleName(), "========> " + rurl + " (" + request.getId() + ")");
                 HttpGet get = new HttpGet(rurl);
+                get.addHeader("Accept-Encoding", "gzip");
                 resp = EntityUtils.toString(client.execute(get).getEntity());
             }
             Log.v(this.getClass().getSimpleName(), "<======= " + resp + " (" + request.getId() + ")");

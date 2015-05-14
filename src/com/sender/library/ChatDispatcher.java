@@ -1,4 +1,4 @@
-package mobi.sender.library;
+package com.sender.library;
 
 import org.json.JSONObject;
 
@@ -92,7 +92,7 @@ public class ChatDispatcher {
     public void onRegOk(String deviceKey) {
         String masterKey = hmacDigest(UDID + deviceKey, developerKey, "HmacSHA256");
         this.masterKey = masterKey;
-        sml.onReg(masterKey);
+        sml.onReg(masterKey, UDID);
     }
 
     public void onRegError(Exception e) {
