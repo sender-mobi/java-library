@@ -59,6 +59,7 @@ public class ChatFacade {
     public static final String CLASS_SEND_MONITORING = ".monitoringData.sender";
     public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
     public static final String CLASS_SHOP = ".worldOfTanks.sender";
+    public static final String CLASS_CHESS = ".chess.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
     public static final String CLASS_NOTIFICATION_ADD = ".addChatNotification.sender";
     public static final String CLASS_NOTIFICATION_DEL = ".delChatNotification.sender";
@@ -90,7 +91,7 @@ public class ChatFacade {
     public static final String URL_DEV = "https://api-dev.sender.mobi/";
     public static final String URL_RC = "https://api-pre.sender.mobi/";
     public static final String URL_PROD = "https://api.sender.mobi/";
-    public static final String URL_PROD_FAST = "https://mobapi.sender.mobi/";
+    public static final String URL_PROD_COM = "https://senderapi.com/";
 
     public static final String URL_FORM = "fsubmit";
     
@@ -175,6 +176,19 @@ public class ChatFacade {
     public void callShop(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SHOP, chatId);
+            cc.send(new SenderRequest(URL_FORM,
+                    form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void callChess(String chatId) {
+        try {
+            JSONObject jo = new JSONObject();
+            jo.put("cmd", "create");
+            JSONObject form2Send = getForm2Send(jo, CLASS_CHESS, chatId);
             cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {

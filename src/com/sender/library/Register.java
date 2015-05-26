@@ -2,9 +2,6 @@ package com.sender.library;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import java.util.Locale;
@@ -48,18 +45,15 @@ public class Register extends Thread{
             jo.put("devModel", devModel);
             jo.put("devName", devModel);
             jo.put("clientVersion", clientVersion);
-            jo.put("devOS", Log.isAndroid() ? "android" : System.getProperty("os.name"));
-            jo.put("clientType", Log.isAndroid() ? "android" : System.getProperty("os.name"));
+            jo.put("devOS", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
+            jo.put("clientType", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
             jo.put("versionOS", System.getProperty("os.version"));
             jo.put("authToken", authToken);
             jo.put("companyId", companyId);
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
             HttpPost post = new HttpPost(reqUrl);
             post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-            DefaultHttpClient client = new DefaultHttpClient();
-            client.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
-            client.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 10000);
-            String rResp = EntityUtils.toString(client.execute(post).getEntity());
+            String rResp = Tool.getData(HttpSigleton.getSenderInstance().execute(post));
             Log.v(this.getClass().getSimpleName(), "<======= " + rResp + "(" + key + ")");
             JSONObject rjo = new JSONObject(rResp);
             if (!rjo.has("deviceKey")) {

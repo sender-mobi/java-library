@@ -1,12 +1,7 @@
 package com.sender.library;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -24,20 +19,10 @@ public class Comet extends Thread {
     private String url;
     private String lastSrvBatchId;
     private String id = UUID.randomUUID().toString().replace("-", "");
-    private DefaultHttpClient client;
 
     public Comet(ChatDispatcher disp, String url) {
         this.disp = disp;
         this.url = url;
-        client = new DefaultHttpClient();
-        client.setKeepAliveStrategy(
-                new ConnectionKeepAliveStrategy() {
-                    @Override
-                    public long getKeepAliveDuration(
-                            HttpResponse response, HttpContext context) {
-                        return 180000;
-                    }
-                });
     }
 
     public String getCometId() {
@@ -64,7 +49,7 @@ public class Comet extends Thread {
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
-                String response = EntityUtils.toString(client.execute(post).getEntity());
+                String response = Tool.getData(HttpSigleton.getCometInstance().execute(post));
                 Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                 JSONObject rjo = new JSONObject(response);
                 if (disp.checkResp(rjo, null, null)) {
@@ -92,7 +77,7 @@ public class Comet extends Thread {
     }
 
     public void disconnect() {
-        client.getConnectionManager().shutdown();
+        HttpSigleton.invalidateCometInstance();
         interrupt();
     }
 }
