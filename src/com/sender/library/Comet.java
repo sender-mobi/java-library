@@ -5,6 +5,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.security.KeyStore;
 import java.util.UUID;
 
 /**
@@ -18,9 +19,11 @@ public class Comet extends Thread {
     private ChatDispatcher disp;
     private String url;
     private String lastSrvBatchId;
+    private KeyStore keyStore;
     private String id = UUID.randomUUID().toString().replace("-", "");
 
-    public Comet(ChatDispatcher disp, String url) {
+    public Comet(ChatDispatcher disp, String url, KeyStore keyStore) {
+        this.keyStore = keyStore;
         this.disp = disp;
         this.url = url;
     }
@@ -49,7 +52,7 @@ public class Comet extends Thread {
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
-                String response = Tool.getData(HttpSigleton.getCometInstance().execute(post));
+                String response = Tool.getData(HttpSigleton.getCometInstance(keyStore).execute(post));
                 Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                 JSONObject rjo = new JSONObject(response);
                 if (disp.checkResp(rjo, null, null)) {

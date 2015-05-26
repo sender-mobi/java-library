@@ -28,7 +28,7 @@ public class Tool {
         if (HttpStatus.SC_OK == status) {
             return EntityUtils.toString(resp.getEntity());
         } else {
-            EntityUtils.consume(resp.getEntity());
+            resp.getEntity().consumeContent();
             throw new IOException("invalid status code " + status);
         }
     }

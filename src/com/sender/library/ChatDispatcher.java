@@ -4,6 +4,7 @@ import org.json.JSONObject;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.KeyStore;
 import java.util.List;
 
 /**
@@ -23,6 +24,7 @@ public class ChatDispatcher {
     private ChatFacade.SenderListener sml;
     public static final String senderChatId = "sender";
     public static ChatDispatcher instanse;
+    private KeyStore keyStore;
     public static final String TAG = "ChatDispatcher";
     private String devModel, devType, clientVersion, authToken, companyId;
     private static final String developerKey = "8feb2b3cecdafe9eb619556feffcb7430df2f3a6f20851e92f3299935db50651";
@@ -42,9 +44,11 @@ public class ChatDispatcher {
                          int protocolVersion,
                          String authToken,
                          String companyId,
+                         KeyStore keyStore,
                          ChatFacade.SenderListener sml) {
         this.devModel = devModel;
         this.devType = devType;
+        this.keyStore = keyStore;
         this.clientVersion = clientVersion;
         this.authToken = authToken;
         this.companyId = companyId;
@@ -52,7 +56,7 @@ public class ChatDispatcher {
         this.UDID = hmacDigest(devId, developerKey, "HmacSHA1");
         this.url = url + protocolVersion + "/";
         this.sml = sml;
-        sender = new Sender(this, this.url);
+        sender = new Sender(this, this.url, keyStore);
     }
 
     public static ChatDispatcher getInstanse(String url,
@@ -64,8 +68,9 @@ public class ChatDispatcher {
                               int protocolVersion,
                               String authToken,
                               String companyId,
+                              KeyStore keyStore,
                               ChatFacade.SenderListener sml) {
-        if (instanse == null) instanse = new ChatDispatcher(url, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, sml);
+        if (instanse == null) instanse = new ChatDispatcher(url, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
         instanse.masterKey = masterKey;
         instanse.startComet();
         if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey)) {
@@ -101,7 +106,7 @@ public class ChatDispatcher {
 
     public void onNeedReg() {
         masterKey = ChatFacade.SID_UNDEF;
-        new Register(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId).start();
+        new Register(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
     }
 
     public void onNeedUpdate() {
@@ -170,15 +175,13 @@ public class ChatDispatcher {
     public void startComet() {
         if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
-            comet = new Comet(this, url);
+            comet = new Comet(this, url, keyStore);
             setCometId(comet.getCometId());
             comet.start();
         } else {
             Log.v(TAG, "comet already running");
         }
     }
-
-
 
     public boolean checkResp(JSONObject rjo, List<SenderRequest> toSend, SenderRequest request) {
         if (ChatDispatcher.CODE_OK.equalsIgnoreCase(rjo.optString("code"))) return true;

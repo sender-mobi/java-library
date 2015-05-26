@@ -4,6 +4,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONObject;
 
+import java.security.KeyStore;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -16,10 +17,11 @@ import java.util.UUID;
 public class Register extends Thread{
 
     private ChatDispatcher disp;
+    private KeyStore keyStore;
     private String url, UDID, devModel, devType, clientVersion, authToken, companyId, developerId;
 
 
-    public Register(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId) {
+    public Register(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
         super("Register");
         this.disp = disp;
         this.developerId = developerId;
@@ -30,6 +32,7 @@ public class Register extends Thread{
         this.clientVersion = clientVersion;
         this.authToken = authToken;
         this.companyId = companyId;
+        this.keyStore = keyStore;
     }
 
     @Override
@@ -53,7 +56,7 @@ public class Register extends Thread{
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
             HttpPost post = new HttpPost(reqUrl);
             post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-            String rResp = Tool.getData(HttpSigleton.getSenderInstance().execute(post));
+            String rResp = Tool.getData(HttpSigleton.getSenderInstance(keyStore).execute(post));
             Log.v(this.getClass().getSimpleName(), "<======= " + rResp + "(" + key + ")");
             JSONObject rjo = new JSONObject(rResp);
             if (!rjo.has("deviceKey")) {

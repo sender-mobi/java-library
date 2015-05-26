@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,10 +31,12 @@ public class Sender implements Runnable {
     private ChatDispatcher disp;
     private String url;
     private static boolean sending;
+    private KeyStore keyStore;
     private static final Object lock = new Object();
 
-    public Sender(ChatDispatcher disp, String url) {
+    public Sender(ChatDispatcher disp, String url, KeyStore keyStore) {
         this.disp = disp;
+        this.keyStore = keyStore;
         this.url = url;
         synchronized (lock) {
             sending = false;
@@ -107,7 +110,7 @@ public class Sender implements Runnable {
                     HttpPost post = new HttpPost(fullUrl);
                     post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                     Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
-                    String response = Tool.getData(HttpSigleton.getSenderInstance().execute(post));
+                    String response = Tool.getData(HttpSigleton.getSenderInstance(keyStore).execute(post));
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     rjo = new JSONObject(response);
                 } catch (Exception e) {
@@ -193,12 +196,12 @@ public class Sender implements Runnable {
                         HttpPost post = new HttpPost(rurl);
                         post.addHeader("Accept-Encoding", "gzip");
                         post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
-                        resp = Tool.getData(HttpSigleton.getSyncClient().execute(post));
+                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore).execute(post));
                     } else {                                                // -------------------- get
                         Log.v(this.getClass().getSimpleName(), "========> " + rurl + " (" + request.getId() + ")");
                         HttpGet get = new HttpGet(rurl);
                         get.addHeader("Accept-Encoding", "gzip");
-                        resp = Tool.getData(HttpSigleton.getSyncClient().execute(get));
+                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore).execute(get));
                     }
                     Log.v(this.getClass().getSimpleName(), "<======= " + resp + " (" + request.getId() + ")");
                     JSONObject jo = new JSONObject(resp);

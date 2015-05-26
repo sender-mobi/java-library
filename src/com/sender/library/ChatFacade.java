@@ -5,6 +5,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -103,17 +104,18 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
-        this(URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, listener);
+        this(URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
-        this(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, listener);
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, KeyStore keystore, SenderListener listener) throws Exception {
+        this(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, keystore, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, final SenderListener listener) throws Exception {
-        this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, listener);
+    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, final SenderListener listener) throws Exception {
+        this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, listener);
+
         this.cc.startComet();
     }
 

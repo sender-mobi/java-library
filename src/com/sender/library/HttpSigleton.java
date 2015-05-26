@@ -7,6 +7,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.protocol.HttpContext;
 
+import java.security.KeyStore;
+
 /**
  * Created with IntelliJ IDEA.
  * User: vp
@@ -20,9 +22,9 @@ public class HttpSigleton {
 
     protected HttpSigleton() {}
 
-    public static HttpClient getSenderInstance() {
+    public static HttpClient getSenderInstance(KeyStore keyStore) {
         if(senderClient == null) {
-            senderClient = new DefaultHttpClient();
+            senderClient = (keyStore == null) ? new DefaultHttpClient() : new SHttpClient(keyStore);
             senderClient.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
             senderClient.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 5000);
 
@@ -38,9 +40,9 @@ public class HttpSigleton {
         return senderClient;
     }
 
-    public static HttpClient getCometInstance() {
+    public static HttpClient getCometInstance(KeyStore keyStore) {
         if(cometClient == null) {
-            cometClient = new DefaultHttpClient();
+            cometClient = (keyStore == null) ? new DefaultHttpClient() : new SHttpClient(keyStore);
             cometClient.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
             cometClient.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 60000);
             cometClient.setKeepAliveStrategy(
@@ -55,8 +57,8 @@ public class HttpSigleton {
         return cometClient;
     }
 
-    public static HttpClient getSyncClient() {
-        DefaultHttpClient client = new DefaultHttpClient();
+    public static HttpClient getSyncClient(KeyStore keyStore) {
+        DefaultHttpClient client = (keyStore == null) ? new DefaultHttpClient() : new SHttpClient(keyStore);
         client.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
         client.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 60000);
         client.setKeepAliveStrategy(
