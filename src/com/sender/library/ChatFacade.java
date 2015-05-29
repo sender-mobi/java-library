@@ -989,11 +989,11 @@ public class ChatFacade {
     }
 
     private String getMediaClass(String ext) {
-        if ("png".equals(ext) || "jpg".equals(ext) || "jpeg".equals(ext) || "gif".equals(ext)) {
+        if ("png".equalsIgnoreCase(ext) || "jpg".equalsIgnoreCase(ext) || "jpeg".equalsIgnoreCase(ext) || "gif".equalsIgnoreCase(ext)) {
             return CLASS_IMAGE_ROUTE;
-        } else if ("mp3".equals(ext)) {
+        } else if ("mp3".equalsIgnoreCase(ext)) {
             return CLASS_AUDIO_ROUTE;
-        } else if ("mp4".equals(ext)) {
+        } else if ("mp4".equalsIgnoreCase(ext)) {
             return CLASS_VIDEO_ROUTE;
         } else {
             return CLASS_FILE_ROUTE;

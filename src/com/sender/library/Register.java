@@ -1,5 +1,6 @@
 package com.sender.library;
 
+import android.os.Build;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONObject;
@@ -50,7 +51,7 @@ public class Register extends Thread{
             jo.put("clientVersion", clientVersion);
             jo.put("devOS", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
             jo.put("clientType", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
-            jo.put("versionOS", System.getProperty("os.version"));
+            jo.put("versionOS", Tool.isAndroid() ? Build.VERSION.RELEASE : System.getProperty("os.version"));
             jo.put("authToken", authToken);
             jo.put("companyId", companyId);
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
