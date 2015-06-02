@@ -102,8 +102,8 @@ public class Sender implements Runnable {
             }
             if (toSend.size() > 0) {
                 JSONObject rjo = null;
+                String id = UUID.randomUUID().toString().replace("-", "");
                 try {
-                    String id = UUID.randomUUID().toString().replace("-", "");
                     JSONObject jo = new JSONObject();
                     jo.put("fs", arr);
                     String fullUrl = url + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
@@ -114,6 +114,7 @@ public class Sender implements Runnable {
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     rjo = new JSONObject(response);
                 } catch (Exception e) {
+                    Log.v(ChatDispatcher.TAG, "<======== " + e.getMessage() + " (" + id + ")");
                     e.printStackTrace();
                     for (SenderRequest sr : toSend) send(sr);
                 }

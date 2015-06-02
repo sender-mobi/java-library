@@ -4,7 +4,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 
 import java.security.KeyStore;
@@ -24,16 +26,17 @@ public class HttpSigleton {
 
     public static HttpClient getSenderInstance(KeyStore keyStore) {
         if(senderClient == null) {
-            senderClient = (keyStore == null) ? new DefaultHttpClient() : new SHttpClient(keyStore);
-            senderClient.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
-            senderClient.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 5000);
+            HttpParams httpParameters = new BasicHttpParams();
+            HttpConnectionParams.setConnectionTimeout(httpParameters, 5000);
+            HttpConnectionParams.setSoTimeout(httpParameters, 5000);
+            senderClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
 
             senderClient.setKeepAliveStrategy(
                     new ConnectionKeepAliveStrategy() {
                         @Override
                         public long getKeepAliveDuration(
                                 HttpResponse response, HttpContext context) {
-                            return 180000;
+                            return 20000;
                         }
                     });
         }
@@ -42,15 +45,16 @@ public class HttpSigleton {
 
     public static HttpClient getCometInstance(KeyStore keyStore) {
         if(cometClient == null) {
-            cometClient = (keyStore == null) ? new DefaultHttpClient() : new SHttpClient(keyStore);
-            cometClient.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
-            cometClient.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 60000);
+            HttpParams httpParameters = new BasicHttpParams();
+            HttpConnectionParams.setConnectionTimeout(httpParameters, 5000);
+            HttpConnectionParams.setSoTimeout(httpParameters, 6000);
+            cometClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
             cometClient.setKeepAliveStrategy(
                     new ConnectionKeepAliveStrategy() {
                         @Override
                         public long getKeepAliveDuration(
                                 HttpResponse response, HttpContext context) {
-                            return 180000;
+                            return 20000;
                         }
                     });
         }
@@ -58,15 +62,16 @@ public class HttpSigleton {
     }
 
     public static HttpClient getSyncClient(KeyStore keyStore) {
-        DefaultHttpClient client = (keyStore == null) ? new DefaultHttpClient() : new SHttpClient(keyStore);
-        client.getParams().setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, 5000);
-        client.getParams().setParameter(HttpConnectionParams.SO_TIMEOUT, 60000);
+        HttpParams httpParameters = new BasicHttpParams();
+        HttpConnectionParams.setConnectionTimeout(httpParameters, 5000);
+        HttpConnectionParams.setSoTimeout(httpParameters, 60000);
+        DefaultHttpClient client = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
         client.setKeepAliveStrategy(
                 new ConnectionKeepAliveStrategy() {
                     @Override
                     public long getKeepAliveDuration(
                             HttpResponse response, HttpContext context) {
-                        return 180000;
+                        return 20000;
                     }
                 });
         return client;
@@ -74,7 +79,7 @@ public class HttpSigleton {
 
     public static void invalidateCometInstance() {
         if (cometClient != null) {
-            cometClient.getConnectionManager().shutdown();
+//            cometClient.getConnectionManager().shutdown();
             cometClient = null;
         }
     }

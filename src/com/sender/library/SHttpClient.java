@@ -7,6 +7,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.HttpParams;
 
 import java.security.KeyStore;
 
@@ -20,7 +21,8 @@ public class SHttpClient extends DefaultHttpClient {
 
     private KeyStore keyStore;
 
-    public SHttpClient(KeyStore keyStore) {
+    public SHttpClient(HttpParams params, KeyStore keyStore) {
+        super(params);
         Log.v(ChatDispatcher.TAG, "make SHttpClient with keystore " + keyStore);
         this.keyStore = keyStore;
     }
