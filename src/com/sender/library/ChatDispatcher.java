@@ -27,8 +27,8 @@ public class ChatDispatcher {
     private KeyStore keyStore;
     public static final String TAG = "ChatDispatcher";
     private String devModel, devType, clientVersion, authToken, companyId;
-    private static final String developerKey = "8feb2b3cecdafe9eb619556feffcb7430df2f3a6f20851e92f3299935db50651";
-    private static final String developerId = "697a0a1a91c2023d3255cfa2b23f6215a53444245237debd16553f5e7f5b8bf7";
+    private String developerKey;
+    private String developerId;
 
     private Sender sender;
     private Comet comet;
@@ -36,6 +36,8 @@ public class ChatDispatcher {
     private String cometId;
 
     private ChatDispatcher(String url,
+                         String developerId,
+                         String developerKey,
                          String masterKey,
                          String devId,
                          String devModel,
@@ -46,6 +48,8 @@ public class ChatDispatcher {
                          String companyId,
                          KeyStore keyStore,
                          ChatFacade.SenderListener sml) {
+        this.developerId = developerId;
+        this.developerKey = developerKey;
         this.devModel = devModel;
         this.devType = devType;
         this.keyStore = keyStore;
@@ -60,6 +64,8 @@ public class ChatDispatcher {
     }
 
     public static ChatDispatcher getInstanse(String url,
+                              String developerId,
+                              String developerKey,
                               String masterKey,
                               String devId,
                               String devModel,
@@ -70,7 +76,7 @@ public class ChatDispatcher {
                               String companyId,
                               KeyStore keyStore,
                               ChatFacade.SenderListener sml) {
-        if (instanse == null) instanse = new ChatDispatcher(url, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
+        if (instanse == null) instanse = new ChatDispatcher(url, developerId, developerKey, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
         instanse.masterKey = masterKey;
         instanse.startComet();
         if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey)) {

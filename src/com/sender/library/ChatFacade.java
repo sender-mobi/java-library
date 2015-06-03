@@ -77,6 +77,8 @@ public class ChatFacade {
     public static final String CLASS_GAME_WINNIE = ".winnieThePoohHoney.sender";
     public static final String CLASS_VIBRO = ".vibro.sender";
     public static final String CLASS_IP = ".ip.sender";
+    public static final String CLASS_START_SYNC = ".startSyncCt.sender";
+    public static final String CLASS_FULL_VERSION = ".fullVersion.sender";
 
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
@@ -103,18 +105,18 @@ public class ChatFacade {
     private ChatDispatcher cc;
 
     @SuppressWarnings("unused")
-    public ChatFacade(String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
-        this(URL_PROD, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, listener);
+    public ChatFacade(String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
+        this(URL_PROD_COM, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, KeyStore keystore, SenderListener listener) throws Exception {
-        this(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, keystore, listener);
+    public ChatFacade(String url, String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, KeyStore keystore, SenderListener listener) throws Exception {
+        this(url, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, keystore, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, final SenderListener listener) throws Exception {
-        this.cc = ChatDispatcher.getInstanse(url, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, listener);
+    public ChatFacade(String url, String developerId, String developerKey,String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, final SenderListener listener) throws Exception {
+        this.cc = ChatDispatcher.getInstanse(url, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, listener);
 
         this.cc.startComet();
     }
@@ -158,6 +160,18 @@ public class ChatFacade {
             JSONObject form2Send = getForm2Send(null, CLASS_WALLET, senderChatId);
             cc.send(new SenderRequest(URL_FORM,
                     form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void callFullVersion(boolean enable) {
+        try {
+            JSONObject jo = new JSONObject();
+            jo.put("activate", enable);
+            JSONObject form2Send = getForm2Send(jo, CLASS_FULL_VERSION, senderChatId);
+            cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
         }
