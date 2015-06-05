@@ -100,10 +100,10 @@ public class ChatDispatcher {
         send(sr);
     }
     
-    public void onRegOk(String deviceKey) {
+    public void onRegOk(String deviceKey, boolean fullVer) {
         String masterKey = hmacDigest(UDID + deviceKey, developerKey, "HmacSHA256");
         this.masterKey = masterKey;
-        sml.onReg(masterKey, UDID);
+        sml.onReg(masterKey, UDID, fullVer);
     }
 
     public void onRegError(Exception e) {

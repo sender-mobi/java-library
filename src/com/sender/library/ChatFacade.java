@@ -1129,7 +1129,7 @@ public class ChatFacade {
 
     public interface SenderListener {
         public void onData(JSONObject jo);
-        public void onReg(String masterKey, String UDID);
+        public void onReg(String masterKey, String UDID, boolean fullVer);
         public void onNeedUpdate();
         public void onRegError(Exception e);
     }

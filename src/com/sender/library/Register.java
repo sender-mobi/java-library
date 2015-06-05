@@ -64,7 +64,11 @@ public class Register extends Thread{
                 throw new Exception("invalid response: " + rResp);
             }
             String deviceKey = rjo.optString("deviceKey");
-            disp.onRegOk(deviceKey);
+            boolean fullVer = true;
+            if (rjo.has("mode")) {
+                if ("restricted".equalsIgnoreCase(rjo.optString("mode"))) fullVer = false;
+            }
+            disp.onRegOk(deviceKey, fullVer);
         } catch (Exception e) {
             e.printStackTrace();
             disp.onRegError(e);
