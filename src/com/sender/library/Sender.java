@@ -30,8 +30,8 @@ public class Sender implements Runnable {
     private BlockingQueue<SenderRequest> queue = new ArrayBlockingQueue<SenderRequest>(10);
     private ChatDispatcher disp;
     private String url;
-    private static boolean sending;
     private KeyStore keyStore;
+    private static boolean sending;
     private static final Object lock = new Object();
 
     public Sender(ChatDispatcher disp, String url, KeyStore keyStore) {

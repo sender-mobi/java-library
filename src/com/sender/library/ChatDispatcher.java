@@ -112,7 +112,7 @@ public class ChatDispatcher {
 
     public void onNeedReg() {
         masterKey = ChatFacade.SID_UNDEF;
-        new Register(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
+        Register.getInstance(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
     }
 
     public void onNeedUpdate() {
