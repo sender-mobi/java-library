@@ -78,7 +78,7 @@ public class ChatDispatcher {
                               ChatFacade.SenderListener sml) {
         if (instanse == null) instanse = new ChatDispatcher(url, developerId, developerKey, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
         instanse.masterKey = masterKey;
-        instanse.startComet();
+//        instanse.startComet();
         if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey)) {
             instanse.onNeedReg();
         }

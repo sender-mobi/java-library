@@ -1,5 +1,6 @@
 package com.sender.library;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONArray;
@@ -52,24 +53,34 @@ public class Comet extends Thread {
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
-                String response = Tool.getData(HttpSigleton.getCometInstance(keyStore).execute(post));
-                Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
-                JSONObject rjo = new JSONObject(response);
-                if (disp.checkResp(rjo, null, null)) {
-                    if (rjo.has("bi")) {
-                        lastSrvBatchId = rjo.optString("bi");
+                try {
+                    HttpResponse rr = HttpSigleton.getCometInstance(keyStore).execute(post);
+                    if (rr.getStatusLine().getStatusCode() != 200) {
+                        throw new Exception("HTTP CODE " + rr.getStatusLine().getStatusCode());
                     }
-                    if (rjo.has("fs")) {
-                        JSONArray fs = rjo.optJSONArray("fs");
-                        for (int i = 0; i < fs.length(); i++) {
-                            JSONObject fsj = fs.optJSONObject(i);
-                            disp.onMessage(fsj);
+                    String response = Tool.getData(rr);
+                    Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
+                    JSONObject rjo = new JSONObject(response);
+                    if (disp.checkResp(rjo, null, null)) {
+                        if (rjo.has("bi")) {
+                            lastSrvBatchId = rjo.optString("bi");
+                        }
+                        if (rjo.has("fs")) {
+                            JSONArray fs = rjo.optJSONArray("fs");
+                            for (int i = 0; i < fs.length(); i++) {
+                                JSONObject fsj = fs.optJSONObject(i);
+                                disp.onMessage(fsj);
+                            }
+                        } else {
+                            sleep(1000);
                         }
                     } else {
                         sleep(1000);
                     }
-                } else {
-                    sleep(1000);
+                } catch (Exception e) {
+                    Log.v(ChatDispatcher.TAG, "Comet error: " + e.getMessage() + " id = " + id);
+                    e.printStackTrace();
+                    sleep(5000);
                 }
             }
         } catch (Exception e) {

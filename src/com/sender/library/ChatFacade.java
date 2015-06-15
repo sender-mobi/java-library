@@ -117,7 +117,6 @@ public class ChatFacade {
     @SuppressWarnings("unused")
     public ChatFacade(String url, String developerId, String developerKey,String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, final SenderListener listener) throws Exception {
         this.cc = ChatDispatcher.getInstanse(url, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, listener);
-
         this.cc.startComet();
     }
 

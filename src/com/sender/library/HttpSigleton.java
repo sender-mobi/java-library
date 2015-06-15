@@ -27,8 +27,8 @@ public class HttpSigleton {
     public static HttpClient getSenderInstance(KeyStore keyStore) {
         if(senderClient == null) {
             HttpParams httpParameters = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParameters, 5000);
-            HttpConnectionParams.setSoTimeout(httpParameters, 5000);
+            HttpConnectionParams.setConnectionTimeout(httpParameters, 20000);
+            HttpConnectionParams.setSoTimeout(httpParameters, 20000);
             senderClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
 
             senderClient.setKeepAliveStrategy(
@@ -36,7 +36,7 @@ public class HttpSigleton {
                         @Override
                         public long getKeepAliveDuration(
                                 HttpResponse response, HttpContext context) {
-                            return 20000;
+                            return 60000;
                         }
                     });
         }
@@ -46,15 +46,15 @@ public class HttpSigleton {
     public static HttpClient getCometInstance(KeyStore keyStore) {
         if(cometClient == null) {
             HttpParams httpParameters = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParameters, 5000);
-            HttpConnectionParams.setSoTimeout(httpParameters, 6000);
+            HttpConnectionParams.setConnectionTimeout(httpParameters, 20000);
+            HttpConnectionParams.setSoTimeout(httpParameters, 20000);
             cometClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
             cometClient.setKeepAliveStrategy(
                     new ConnectionKeepAliveStrategy() {
                         @Override
                         public long getKeepAliveDuration(
                                 HttpResponse response, HttpContext context) {
-                            return 20000;
+                            return 60000;
                         }
                     });
         }
@@ -63,7 +63,7 @@ public class HttpSigleton {
 
     public static HttpClient getSyncClient(KeyStore keyStore) {
         HttpParams httpParameters = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(httpParameters, 5000);
+        HttpConnectionParams.setConnectionTimeout(httpParameters, 10000);
         HttpConnectionParams.setSoTimeout(httpParameters, 60000);
         DefaultHttpClient client = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
         client.setKeepAliveStrategy(
@@ -71,7 +71,7 @@ public class HttpSigleton {
                     @Override
                     public long getKeepAliveDuration(
                             HttpResponse response, HttpContext context) {
-                        return 20000;
+                        return 60000;
                     }
                 });
         return client;
