@@ -34,6 +34,9 @@ public class ChatDispatcher {
     private Comet comet;
     private String token;
     private String cometId;
+    private static boolean regProcess;
+    private static final Object lock = new Object();
+
 
     private ChatDispatcher(String url,
                          String developerId,
@@ -101,16 +104,35 @@ public class ChatDispatcher {
     }
     
     public void onRegOk(String deviceKey, boolean fullVer) {
+        synchronized (lock) {
+            regProcess = false;
+        }
         String masterKey = hmacDigest(UDID + deviceKey, developerKey, "HmacSHA256");
         this.masterKey = masterKey;
         sml.onReg(masterKey, UDID, fullVer);
     }
 
     public void onRegError(Exception e) {
+        synchronized (lock) {
+            regProcess = false;
+        }
         sml.onRegError(e);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        onNeedReg();
     }
 
     public void onNeedReg() {
+        synchronized (lock) {
+            if (regProcess) {
+                Log.v(TAG, "reg in process...");
+                return;
+            }
+            regProcess = true;
+        }
         masterKey = ChatFacade.SID_UNDEF;
         Register.getInstance(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
     }

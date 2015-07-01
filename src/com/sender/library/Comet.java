@@ -42,6 +42,7 @@ public class Comet extends Thread {
                     throw new Exception("duplicate comet: my id = " + id + " active = " + disp.getCometId());
                 }
                 while (ChatFacade.SID_UNDEF.equalsIgnoreCase(disp.getMasterKey())) {
+                    disp.onNeedReg();
                     Log.v(ChatDispatcher.TAG, "need reg... wait comet");
                     sleep(1000);
                 }

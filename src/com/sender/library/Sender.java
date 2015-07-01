@@ -70,6 +70,7 @@ public class Sender implements Runnable {
         try {
             Log.v(ChatDispatcher.TAG, "step to send...");
             while (ChatFacade.SID_UNDEF.equalsIgnoreCase(disp.getMasterKey())) {
+                disp.onNeedReg();
                 Log.v(ChatDispatcher.TAG, "need reg... wait send");
                 try {
                     Thread.sleep(1000);

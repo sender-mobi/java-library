@@ -628,6 +628,29 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
+    public void getHistory(final String chatId, final JsonRespListener jrl) {
+        try {
+            final JSONObject rjo = new JSONObject();
+            rjo.put("pos", 0);
+            rjo.put("size", 50);
+            rjo.put("chatId", chatId);
+            cc.sendSync("history", rjo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject data) {
+                    jrl.onSuccess(data);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    jrl.onError(e, rjo.toString());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public void nativeAuth(final String action, final String value, final String procId, final AuthListener al) {
         try {
             final JSONObject model = new JSONObject();
@@ -1024,7 +1047,15 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void setMySelfData(final String name, final InputStream icon, final String type, final String description, final UploadFileListener ufl) {
+    public void setMySelfData(
+            final String name,
+            final String iconUrl,
+            final InputStream icon,
+            final String type,
+            final String description,
+            final String msgKey,
+            final String payKey,
+            final SetSelfListener ufl) {
         try {
             if (icon != null && icon.available() > 0) {
                 uploadFile(icon, type, new UploadFileListener() {
@@ -1032,53 +1063,58 @@ public class ChatFacade {
                     @Override
                     public void onSuccess(String url) {
                         if (ufl != null) ufl.onSuccess(url);
-                        sendMySelfData(url, name, description);
+                        setMySelfData(null, url, null, null, null, null, null, null);
                     }
 
                     @Override
                     public void onError(Exception e, String request) {
-                        ufl.onError(e, request);
+                        if (ufl != null) {
+                            ufl.onError(e, request);
+                        } else {
+                            e.printStackTrace();
+                        }
                     }
                 });
             } else {
-                sendMySelfData(null, name, description);
+                final JSONObject model = new JSONObject();
+                model.put("name", name);
+                model.put("photo", iconUrl);
+                model.put("description", description);
+                model.put("btcAddr", payKey);
+                model.put("msgKey", msgKey);
+                cc.sendSync("selfinfo_set", model, new SenderRequest.HttpDataListener() {
+                    @Override
+                    public void onResponse(JSONObject data) {
+                        if (ufl != null) ufl.onSetSuccess();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (ufl != null) ufl.onError(e, model.toString());
+                        else e.printStackTrace();
+                    }
+                });
             }   
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void sendMySelfData(String name, String description, boolean delPhoto) {
-        try {
-            JSONObject model = new JSONObject();
-            model.put("name", name);
-            if (delPhoto) model.put("photo", "");
-            model.put("description", description);
-            JSONObject jo = getForm2Send(model,CLASS_SET_SELF_INFO, senderChatId);
-            cc.send(new SenderRequest(URL_FORM, jo));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void sendMySelfData(String url, String name, String description) {
-        try {
-            JSONObject model = new JSONObject();
-            model.put("name", name);
-            model.put("photo", url);
-            model.put("description", description);
-            JSONObject jo = getForm2Send(model,CLASS_SET_SELF_INFO, senderChatId);
-            cc.send(new SenderRequest(URL_FORM, jo));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @SuppressWarnings("unused")
-    public void getMySelfData() {
+    public void getMySelfData(final JsonRespListener jrl) {
         try {
-            JSONObject jo = getForm2Send(new JSONObject(), CLASS_GET_SELF_INFO, senderChatId);
-            cc.send(new SenderRequest(URL_FORM, jo));
+            cc.sendSync("selfinfo_get", new JSONObject(), new SenderRequest.HttpDataListener() {
+                        @Override
+                        public void onResponse(JSONObject data) {
+                            JSONObject jo = data.optJSONObject("selfInfo");
+                            jrl.onSuccess(jo);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            jrl.onError(e, "selfinfo_get");
+                        }
+                    });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1104,6 +1140,10 @@ public class ChatFacade {
 
     public interface AuthListener extends RespListener {
         public void onSuccess(String step, String procId, String desc, String errMsg);
+    }
+
+    public interface SetSelfListener extends UploadFileListener {
+        public void onSetSuccess();
     }
 
     public interface UploadFileListener extends RespListener {

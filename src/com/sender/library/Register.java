@@ -20,8 +20,6 @@ public class Register extends Thread{
     private ChatDispatcher disp;
     private KeyStore keyStore;
     private String url, UDID, devModel, devType, clientVersion, authToken, companyId, developerId;
-    private static boolean sending;
-    private static final Object lock = new Object();
     public static Register instance;
 
     public static Register getInstance(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
@@ -47,14 +45,6 @@ public class Register extends Thread{
 
     @Override
     public void run() {
-        synchronized (lock) {
-            if (sending) {
-                Log.v(ChatDispatcher.TAG, "reg in process...");
-                return;
-            } else {
-                sending = true;
-            }
-        }
         try {
             String key = UUID.randomUUID().toString().replace("-", "");
             String reqUrl = url + "reg";
@@ -89,10 +79,6 @@ public class Register extends Thread{
         } catch (Exception e) {
             e.printStackTrace();
             disp.onRegError(e);
-        } finally {
-            synchronized (lock) {
-                sending = false;
-            }
         }
     }
 }
