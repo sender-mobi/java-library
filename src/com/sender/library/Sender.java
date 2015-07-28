@@ -110,12 +110,12 @@ public class Sender implements Runnable {
                     String fullUrl = url + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
                     HttpPost post = new HttpPost(fullUrl);
                     post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-                    Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
+                    Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
                     String response = Tool.getData(HttpSigleton.getSenderInstance(keyStore).execute(post));
-                    Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
+                    Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
                     rjo = new JSONObject(response);
                 } catch (Exception e) {
-                    Log.v(ChatDispatcher.TAG, "<======== " + e.getMessage() + " (" + id + ")");
+                    Log.v(ChatDispatcher.TAG, "<======== (" + id + ") " + e.getMessage());
                     e.printStackTrace();
                     for (SenderRequest sr : toSend) send(sr);
                 }
@@ -194,18 +194,18 @@ public class Sender implements Runnable {
                         con.disconnect();
                         resp = sb.toString();
                     } else if (request.getPostData() != null) {             // -------------------- post
-                        Log.v(ChatDispatcher.TAG, "========> " + rurl + " " + request.getPostData() + " (" + request.getId() + ")");
+                        Log.v(ChatDispatcher.TAG, "========> " + rurl + " (" + request.getId() + ") " + request.getPostData());
                         HttpPost post = new HttpPost(rurl);
                         post.addHeader("Accept-Encoding", "gzip");
                         post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
-                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore).execute(post));
+                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore, 60000).execute(post));
                     } else {                                                // -------------------- get
-                        Log.v(this.getClass().getSimpleName(), "========> " + rurl + " (" + request.getId() + ")");
+                        Log.v(this.getClass().getSimpleName(), "========> (" + request.getId() + ") " + rurl);
                         HttpGet get = new HttpGet(rurl);
                         get.addHeader("Accept-Encoding", "gzip");
-                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore).execute(get));
+                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore, 60000).execute(get));
                     }
-                    Log.v(this.getClass().getSimpleName(), "<======= " + resp + " (" + request.getId() + ")");
+                    Log.v(this.getClass().getSimpleName(), "<======= (" + request.getId() + ") " + resp);
                     JSONObject jo = new JSONObject(resp);
                     if (disp.checkResp(jo, null, request)) {
                         request.response(jo);

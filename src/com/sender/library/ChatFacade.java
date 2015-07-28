@@ -880,10 +880,8 @@ public class ChatFacade {
         try {
             fname = fname.replace("\\", "/");
             if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
-            if (!fname.contains(".")) throw new Exception("invalid file name");
             final String ffname = fname;
-            int pos = fname.lastIndexOf(".");
-            final String extPart = fname.substring(pos+1);
+            final String extPart = fname.contains(".") ? fname.substring(fname.lastIndexOf(".") + 1) : "zip";
             if (preview != null) {
                 uploadFile(new ByteArrayInputStream(preview), "png", new UploadFileListener() {
                     @Override

@@ -64,7 +64,7 @@ public class Register extends Thread{
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
             HttpPost post = new HttpPost(reqUrl);
             post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-            String rResp = Tool.getData(HttpSigleton.getSenderInstance(keyStore).execute(post));
+            String rResp = Tool.getData(HttpSigleton.getSyncClient(keyStore, 10000).execute(post));
             Log.v(this.getClass().getSimpleName(), "<======= " + rResp + "(" + key + ")");
             JSONObject rjo = new JSONObject(rResp);
             if (!rjo.has("deviceKey")) {

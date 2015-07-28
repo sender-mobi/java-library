@@ -29,8 +29,8 @@ public class HttpSigleton {
     public static HttpClient getSenderInstance(KeyStore keyStore) {
         if(senderClient == null) {
             HttpParams httpParameters = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParameters, 20000);
-            HttpConnectionParams.setSoTimeout(httpParameters, 20000);
+            HttpConnectionParams.setConnectionTimeout(httpParameters, 10000);
+            HttpConnectionParams.setSoTimeout(httpParameters, 10000);
             senderClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
 
             senderClient.setKeepAliveStrategy(
@@ -96,19 +96,11 @@ public class HttpSigleton {
         return cometClient;
     }
 
-    public static HttpClient getSyncClient(KeyStore keyStore) {
+    public static HttpClient getSyncClient(KeyStore keyStore, int readTimeout) {
         HttpParams httpParameters = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(httpParameters, 10000);
-        HttpConnectionParams.setSoTimeout(httpParameters, 60000);
+        HttpConnectionParams.setSoTimeout(httpParameters, readTimeout);
         DefaultHttpClient client = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
-        client.setKeepAliveStrategy(
-                new ConnectionKeepAliveStrategy() {
-                    @Override
-                    public long getKeepAliveDuration(
-                            HttpResponse response, HttpContext context) {
-                        return 60000;
-                    }
-                });
         client.addResponseInterceptor(new HttpResponseInterceptor() {
             public void process(final HttpResponse response, final HttpContext context) throws HttpException, IOException {
                 HttpEntity entity = response.getEntity();

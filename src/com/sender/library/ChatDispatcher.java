@@ -134,7 +134,11 @@ public class ChatDispatcher {
             regProcess = true;
         }
         masterKey = ChatFacade.SID_UNDEF;
-        Register.getInstance(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
+        try {
+            Register.getInstance(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
+        } catch (IllegalThreadStateException e) {
+            onRegError(e);
+        }
     }
 
     public void onNeedUpdate() {
