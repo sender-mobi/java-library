@@ -72,6 +72,7 @@ public class Comet extends Thread {
                                 JSONObject fsj = fs.optJSONObject(i);
                                 disp.onMessage(fsj);
                             }
+                            sleep(200);
                         } else {
                             sleep(1000);
                         }

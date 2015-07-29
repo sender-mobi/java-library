@@ -82,9 +82,12 @@ public class ChatDispatcher {
         if (instanse == null) instanse = new ChatDispatcher(url, developerId, developerKey, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
         instanse.masterKey = masterKey;
 //        instanse.startComet();
-        if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey)) {
-            instanse.onNeedReg();
+        synchronized (lock) {
+            if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey) && !regProcess) {
+                instanse.onNeedReg();
+            }
         }
+
         return instanse;
     }
 
@@ -137,7 +140,7 @@ public class ChatDispatcher {
         try {
             Register.getInstance(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
         } catch (IllegalThreadStateException e) {
-            onRegError(e);
+            e.printStackTrace();
         }
     }
 
