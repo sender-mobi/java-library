@@ -20,6 +20,7 @@ public class ChatDispatcher {
     public static final String CODE_INVALID_UDID = "3";
     public static final String CODE_OK = "0";
     public static final String CODE_NEED_UPDATE = "8";
+    public static final String CODE_DUPLICATE_COMET = "5";
     private String url;
     private ChatFacade.SenderListener sml;
     public static final String senderChatId = "sender";
@@ -137,11 +138,7 @@ public class ChatDispatcher {
             regProcess = true;
         }
         masterKey = ChatFacade.SID_UNDEF;
-        try {
-            Register.getInstance(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
-        } catch (IllegalThreadStateException e) {
-            e.printStackTrace();
-        }
+        new Register(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
     }
 
     public void onNeedUpdate() {

@@ -20,16 +20,8 @@ public class Register extends Thread{
     private ChatDispatcher disp;
     private KeyStore keyStore;
     private String url, UDID, devModel, devType, clientVersion, authToken, companyId, developerId;
-    public static Register instance;
 
-    public static Register getInstance(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
-        if (instance == null) {
-            instance = new Register(disp, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore);
-        }
-        return instance;
-    }
-
-    private Register(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
+    public Register(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
         super("Register");
         this.disp = disp;
         this.developerId = developerId;
