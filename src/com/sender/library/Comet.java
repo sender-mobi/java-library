@@ -63,6 +63,10 @@ public class Comet extends Thread {
                     String response = Tool.getData(rr);
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     JSONObject rjo = new JSONObject(response);
+                    if (ChatDispatcher.CODE_DUPLICATE_COMET.equalsIgnoreCase(rjo.optString("code"))) {
+                        Log.v(ChatDispatcher.TAG, "duplicate comet: my id = " + id + " (code 5)");
+                        return;
+                    }
                     if (disp.checkResp(rjo, null, null)) {
                         if (rjo.has("bi")) {
                             lastSrvBatchId = rjo.optString("bi");
