@@ -122,7 +122,7 @@ public class HttpSigleton {
 
     public static void invalidateCometInstance() {
         if (cometClient != null) {
-//            cometClient.getConnectionManager().shutdown();
+            cometClient.getConnectionManager().shutdown();
             cometClient = null;
         }
     }
