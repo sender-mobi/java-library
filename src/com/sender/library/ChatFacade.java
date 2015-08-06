@@ -850,6 +850,60 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
+    public void searchCompanies(final String t, final JsonRespListener cil) {
+        try {
+            final JSONObject jo = new JSONObject();
+            jo.put("t", t);
+            cc.sendSync("global_search", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    cil.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    cil.onError(e, "global_search : " + jo.toString());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static void checkNewMessages(String UDID, CheckListener cl) {
+        checkNewMessages(UDID, 0, cl);
+    }
+
+    private static void checkNewMessages(final String UDID, final int counter, final CheckListener cl) {
+        UDP.send(UDID, 10 * 1000, new UDP.SendListener() {
+            @Override
+            public void onTimeout() {
+                if (counter < 10) {
+                    try {
+                        Thread.sleep(1000);
+                        checkNewMessages(UDID, counter + 1, cl);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    cl.onCheck(false);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                cl.onCheck(false);
+            }
+
+            @Override
+            public void onSuccess(String resp) {
+                cl.onCheck(resp.startsWith("1"));
+            }
+        });
+    }
+
     private JSONObject getForm2Send(JSONObject model, String formClass, String chatId) {
         return getForm2Send(model, formClass, chatId, null);
     }
@@ -1162,6 +1216,10 @@ public class ChatFacade {
 
     public interface RespListener {
         public void onError(Exception e, String req);
+    }
+
+    public interface CheckListener extends RespListener{
+        public void onCheck(boolean rez);
     }
 
     public interface SenderListener {
