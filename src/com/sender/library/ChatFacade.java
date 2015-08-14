@@ -252,6 +252,11 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
+    public String[] getSipLoginPass() {
+        return new String[] {cc.getUDID(), cc.getToken()};
+    }
+
+    @SuppressWarnings("unused")
     public void callShop(String chatId) {
         try {
             JSONObject form2Send = getForm2Send(null, CLASS_SHOP, chatId);
