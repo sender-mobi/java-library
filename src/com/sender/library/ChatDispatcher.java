@@ -21,7 +21,7 @@ public class ChatDispatcher {
     public static final String CODE_OK = "0";
     public static final String CODE_NEED_UPDATE = "8";
     public static final String CODE_DUPLICATE_COMET = "5";
-    private String url;
+    private int protocolVersion;
     private ChatFacade.SenderListener sml;
     public static final String senderChatId = "sender";
     public static ChatDispatcher instanse;
@@ -39,8 +39,7 @@ public class ChatDispatcher {
     private static final Object lock = new Object();
 
 
-    private ChatDispatcher(String url,
-                         String developerId,
+    private ChatDispatcher(String developerId,
                          String developerKey,
                          String masterKey,
                          String devId,
@@ -62,12 +61,12 @@ public class ChatDispatcher {
         this.companyId = companyId;
         this.masterKey = masterKey;
         this.UDID = hmacDigest(devId, developerKey, "HmacSHA1");
-        this.url = url + protocolVersion + "/";
+        this.protocolVersion = protocolVersion;
         this.sml = sml;
-        sender = new Sender(this, this.url, keyStore);
+        sender = new Sender(this, keyStore);
     }
 
-    public static ChatDispatcher getInstanse(String url,
+    public static ChatDispatcher getInstanse(
                               String developerId,
                               String developerKey,
                               String masterKey,
@@ -80,7 +79,7 @@ public class ChatDispatcher {
                               String companyId,
                               KeyStore keyStore,
                               ChatFacade.SenderListener sml) {
-        if (instanse == null) instanse = new ChatDispatcher(url, developerId, developerKey, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
+        if (instanse == null) instanse = new ChatDispatcher(developerId, developerKey, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
         instanse.masterKey = masterKey;
 //        instanse.startComet();
         synchronized (lock) {
@@ -90,6 +89,10 @@ public class ChatDispatcher {
         }
 
         return instanse;
+    }
+
+    public String getUrl() {
+        return "https://" + ChatFacade.getUrl() + "/" + protocolVersion + "/";
     }
 
     public void end() {
@@ -138,7 +141,7 @@ public class ChatDispatcher {
             regProcess = true;
         }
         masterKey = ChatFacade.SID_UNDEF;
-        new Register(this, url, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
+        new Register(this, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
     }
 
     public void onNeedUpdate() {
@@ -207,7 +210,7 @@ public class ChatDispatcher {
     public void startComet() {
         if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
-            comet = new Comet(this, url, keyStore);
+            comet = new Comet(this, keyStore);
             setCometId(comet.getCometId());
             comet.start();
         } else {

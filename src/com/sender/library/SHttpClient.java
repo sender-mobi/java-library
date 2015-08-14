@@ -38,7 +38,7 @@ public class SHttpClient extends DefaultHttpClient {
     private SSLSocketFactory getSslSocketFactory() {
         try {
             SSLSocketFactory sf = new SSLSocketFactory(keyStore);
-            sf.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
+            sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
             return sf;
         } catch (Exception e) {
             throw new AssertionError(e);

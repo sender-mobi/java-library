@@ -5,6 +5,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +23,19 @@ public class Tool {
         } catch(ClassNotFoundException e) {
             return false;
         }
+    }
+
+    public static boolean isAddrIsIP(String addr) {
+        addr = addr.replace("https://", "");
+        addr = addr.replace("http://", "");
+        addr = addr.substring(0, addr.indexOf("/"));
+        try {
+            InetAddress ia = InetAddress.getByName(addr);
+            return addr.equalsIgnoreCase(ia.getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public static String getData(HttpResponse resp) throws IOException {

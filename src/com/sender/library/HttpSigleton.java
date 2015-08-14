@@ -26,81 +26,49 @@ public class HttpSigleton {
 
     protected HttpSigleton() {}
 
-    public static HttpClient getSenderInstance(KeyStore keyStore) {
+    public static HttpClient getSenderInstance(String addr, KeyStore keyStore) {
         if(senderClient == null) {
-            HttpParams httpParameters = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParameters, 10000);
-            HttpConnectionParams.setSoTimeout(httpParameters, 10000);
-            senderClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
-
-            senderClient.setKeepAliveStrategy(
-                    new ConnectionKeepAliveStrategy() {
-                        @Override
-                        public long getKeepAliveDuration(
-                                HttpResponse response, HttpContext context) {
-                            return 60000;
-                        }
-                    });
-            senderClient.addResponseInterceptor(new HttpResponseInterceptor() {
-                public void process(final HttpResponse response, final HttpContext context) throws HttpException, IOException {
-                    HttpEntity entity = response.getEntity();
-                    Header encheader = entity.getContentEncoding();
-                    if (encheader != null) {
-                        HeaderElement[] codecs = encheader.getElements();
-                        for (int i = 0; i < codecs.length; i++) {
-                            if (codecs[i].getName().equalsIgnoreCase("gzip")) {
-                                Log.v(ChatDispatcher.TAG, " === gzip detected!");
-                                response.setEntity(new GzipDecompressingEntity(entity));
-                                return;
-                            }
-                        }
-                    }
-                }
-            });
+            senderClient = getClient(addr, keyStore, true, 10000, 10000);
         }
         return senderClient;
     }
 
-    public static HttpClient getCometInstance(KeyStore keyStore) {
+    public static HttpClient getCometInstance(String addr, KeyStore keyStore) {
         if(cometClient == null) {
-            HttpParams httpParameters = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParameters, 20000);
-            HttpConnectionParams.setSoTimeout(httpParameters, 60000);
-            cometClient = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
-            cometClient.setKeepAliveStrategy(
-                    new ConnectionKeepAliveStrategy() {
-                        @Override
-                        public long getKeepAliveDuration(
-                                HttpResponse response, HttpContext context) {
-                            return 60000;
-                        }
-                    });
-            cometClient.addResponseInterceptor(new HttpResponseInterceptor() {
-                public void process(final HttpResponse response, final HttpContext context) throws HttpException, IOException {
-                    HttpEntity entity = response.getEntity();
-                    Header encheader = entity.getContentEncoding();
-                    if (encheader != null) {
-                        HeaderElement[] codecs = encheader.getElements();
-                        for (int i = 0; i < codecs.length; i++) {
-                            if (codecs[i].getName().equalsIgnoreCase("gzip")) {
-                                Log.v(ChatDispatcher.TAG, " === gzip detected!");
-                                response.setEntity(new GzipDecompressingEntity(entity));
-                                return;
-                            }
-                        }
-                    }
-                }
-            });
+            cometClient = getClient(addr, keyStore, true, 20000, 60000);
         }
 
         return cometClient;
     }
 
-    public static HttpClient getSyncClient(KeyStore keyStore, int readTimeout) {
+    public static HttpClient getSyncClient(String addr, KeyStore keyStore, int readTimeout) {
+        return getClient(addr, keyStore, false, 10000, readTimeout);
+    }
+
+    public static void invalidateCometInstance() {
+        if (cometClient != null) {
+            cometClient.getConnectionManager().shutdown();
+            cometClient = null;
+        }
+    }
+
+    private static DefaultHttpClient getClient(String addr, KeyStore keyStore, boolean isKeepAlive, int connectTimeouat, int readTimeout) {
+        DefaultHttpClient client = null;
         HttpParams httpParameters = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(httpParameters, 10000);
+        HttpConnectionParams.setConnectionTimeout(httpParameters, connectTimeouat);
         HttpConnectionParams.setSoTimeout(httpParameters, readTimeout);
-        DefaultHttpClient client = (keyStore == null) ? new DefaultHttpClient(httpParameters) : new SHttpClient(httpParameters, keyStore);
+        client = (Tool.isAddrIsIP(addr)) ? new SHttpClient(httpParameters, keyStore) : new DefaultHttpClient(httpParameters);
+        if (isKeepAlive) {
+            client.setKeepAliveStrategy(
+                    new ConnectionKeepAliveStrategy() {
+                        @Override
+                        public long getKeepAliveDuration(
+                                HttpResponse response, HttpContext context) {
+                            return 60000;
+                        }
+                    });
+
+        }
         client.addResponseInterceptor(new HttpResponseInterceptor() {
             public void process(final HttpResponse response, final HttpContext context) throws HttpException, IOException {
                 HttpEntity entity = response.getEntity();
@@ -118,12 +86,5 @@ public class HttpSigleton {
             }
         });
         return client;
-    }
-
-    public static void invalidateCometInstance() {
-        if (cometClient != null) {
-            cometClient.getConnectionManager().shutdown();
-            cometClient = null;
-        }
     }
 }

@@ -18,15 +18,13 @@ import java.util.UUID;
 public class Comet extends Thread {
 
     private ChatDispatcher disp;
-    private String url;
     private String lastSrvBatchId;
     private KeyStore keyStore;
     private String id = UUID.randomUUID().toString().replace("-", "");
 
-    public Comet(ChatDispatcher disp, String url, KeyStore keyStore) {
+    public Comet(ChatDispatcher disp, KeyStore keyStore) {
         this.keyStore = keyStore;
         this.disp = disp;
-        this.url = url;
     }
 
     public String getCometId() {
@@ -51,12 +49,12 @@ public class Comet extends Thread {
                 JSONObject jo = new JSONObject();
                 jo.put("lbi", lastSrvBatchId);
                 jo.put("meta", new JSONObject());
-                String fullUrl = url + "comet?udid=" + disp.getUDID() + "&token=" + disp.getToken();
+                String fullUrl = disp.getUrl() + "comet?udid=" + disp.getUDID() + "&token=" + disp.getToken();
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
                 try {
-                    HttpResponse rr = HttpSigleton.getCometInstance(keyStore).execute(post);
+                    HttpResponse rr = HttpSigleton.getCometInstance(fullUrl, keyStore).execute(post);
                     if (rr.getStatusLine().getStatusCode() != 200) {
                         throw new Exception("HTTP CODE " + rr.getStatusLine().getStatusCode());
                     }

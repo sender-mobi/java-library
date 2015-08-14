@@ -29,15 +29,13 @@ public class Sender implements Runnable {
 
     private BlockingQueue<SenderRequest> queue = new ArrayBlockingQueue<SenderRequest>(10);
     private ChatDispatcher disp;
-    private String url;
     private KeyStore keyStore;
     private static boolean sending;
     private static final Object lock = new Object();
 
-    public Sender(ChatDispatcher disp, String url, KeyStore keyStore) {
+    public Sender(ChatDispatcher disp, KeyStore keyStore) {
         this.disp = disp;
         this.keyStore = keyStore;
-        this.url = url;
         synchronized (lock) {
             sending = false;
         }
@@ -107,11 +105,11 @@ public class Sender implements Runnable {
                 try {
                     JSONObject jo = new JSONObject();
                     jo.put("fs", arr);
-                    String fullUrl = url + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
+                    String fullUrl = disp.getUrl() + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
                     HttpPost post = new HttpPost(fullUrl);
                     post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                     Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
-                    String response = Tool.getData(HttpSigleton.getSenderInstance(keyStore).execute(post));
+                    String response = Tool.getData(HttpSigleton.getSenderInstance(fullUrl, keyStore).execute(post));
                     Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
                     rjo = new JSONObject(response);
                 } catch (Exception e) {
@@ -158,7 +156,7 @@ public class Sender implements Runnable {
             public void run() {
                 try {
                     String resp;
-                    String rurl = url + request.getRequestURL() + (request.getRequestURL().contains("?") ? "&" : "?") + "udid=" + disp.getUDID() + "&token=" + disp.getToken();
+                    String rurl = disp.getUrl() + request.getRequestURL() + (request.getRequestURL().contains("?") ? "&" : "?") + "udid=" + disp.getUDID() + "&token=" + disp.getToken();
                     if (request.getData() != null && request.getData().available() > 0) {                        // -------------------- binary post
                         Log.v(this.getClass().getSimpleName(), "========> " + rurl + " with binary data " + " (" + request.getId() + ")");
                         URL purl = new URL(rurl);
@@ -194,16 +192,16 @@ public class Sender implements Runnable {
                         con.disconnect();
                         resp = sb.toString();
                     } else if (request.getPostData() != null) {             // -------------------- post
-                        Log.v(ChatDispatcher.TAG, "========> " + rurl + " (" + request.getId() + ") " + request.getPostData());
+                        Log.v(ChatDispatcher.TAG, "========> (" + request.getId() + ") " + rurl + " " + request.getPostData());
                         HttpPost post = new HttpPost(rurl);
                         post.addHeader("Accept-Encoding", "gzip");
                         post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
-                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore, 60000).execute(post));
+                        resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(post));
                     } else {                                                // -------------------- get
                         Log.v(this.getClass().getSimpleName(), "========> (" + request.getId() + ") " + rurl);
                         HttpGet get = new HttpGet(rurl);
                         get.addHeader("Accept-Encoding", "gzip");
-                        resp = Tool.getData(HttpSigleton.getSyncClient(keyStore, 60000).execute(get));
+                        resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(get));
                     }
                     Log.v(this.getClass().getSimpleName(), "<======= (" + request.getId() + ") " + resp);
                     JSONObject jo = new JSONObject(resp);

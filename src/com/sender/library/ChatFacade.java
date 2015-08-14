@@ -5,10 +5,10 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.security.KeyStore;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -91,22 +91,25 @@ public class ChatFacade {
     public static final String AUTH_STEP_IVR = "ivr";
     public static final String AUTH_STEP_FINISH = "success";
 
-    public static final String URL_DEV = "https://api-dev.sender.mobi/";
-    public static final String URL_RC = "https://api-pre.sender.mobi/";
-    public static final String URL_PROD = "https://api.sender.mobi/";
-    public static final String URL_PROD_COM = "https://senderapi.com/";
+    public static final String URL_DEV = "api-dev.sender.mobi";
+    public static final String URL_RC = "api-pre.sender.mobi";
+    public static final String URL_PROD = "api.sender.mobi";
+    public static final String URL_PROD_COM = "senderapi.com";
+    public static final String URL_PROD_WWW = "www.senderapi.com";
+
+    public static final CopyOnWriteArrayList<IP> IP_POOL = new CopyOnWriteArrayList<IP>();
 
     public static final String URL_FORM = "fsubmit";
-    
     public static final String SID_UNDEF = "undef";
-
     public static final String senderChatId = "sender";
+
+    private static String currUrl;
 
     private ChatDispatcher cc;
 
     @SuppressWarnings("unused")
     public ChatFacade(String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
-        this(URL_PROD_COM, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, listener);
+        this(URL_PROD_WWW, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, listener);
     }
     
     @SuppressWarnings("unused")
@@ -116,8 +119,69 @@ public class ChatFacade {
     
     @SuppressWarnings("unused")
     public ChatFacade(String url, String developerId, String developerKey,String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, final SenderListener listener) throws Exception {
-        this.cc = ChatDispatcher.getInstanse(url, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, listener);
+        currUrl = url;
+        this.cc = ChatDispatcher.getInstanse(developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, new SenderListener() {
+            @Override
+            public void onData(JSONObject jo) {
+                try {
+                    String formClass = (jo.has("formId") ? jo.optString("formId") : "") + "." + jo.optString("robotId") + "." + jo.optString("companyId");
+                    if (jo.has("robotId") && jo.has("companyId")) {
+                        jo.put("class", formClass);
+                    }
+                    if (formClass.equalsIgnoreCase(ChatFacade.CLASS_IP)) {
+                        IP_POOL.clear();
+                        JSONObject model = new JSONObject("model");
+                        Iterator keys = model.keys();
+                        while (keys.hasNext()) {
+                            String ip = model.optString(keys.next().toString());
+                            if (ip != null && ip.length() > 6) {
+                                IP_POOL.add(new IP(ip));
+                            }
+                        }
+                        return;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                listener.onData(jo);
+            }
+
+            @Override
+            public void onReg(String masterKey, String UDID, boolean fullVer) {
+                listener.onReg(masterKey, UDID, fullVer);
+            }
+
+            @Override
+            public void onNeedUpdate() {
+                listener.onNeedUpdate();
+            }
+
+            @Override
+            public void onRegError(Exception e) {
+                listener.onRegError(e);
+            }
+        });
         this.cc.startComet();
+    }
+
+    public static String getUrl() {
+        Collections.shuffle(IP_POOL);
+        for (IP ip: IP_POOL) {
+            if (ip.isAlive()) {
+                try {
+                    InetAddress address = InetAddress.getByName(ip.getIp());
+                    if (address.isReachable(500)) {
+                        return ip.getIp();
+                    }
+                    Log.v(ChatDispatcher.TAG, "addr " + ip.getIp() + " is dead :(");
+                    ip.setErr();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    ip.setErr();
+                }
+            }
+        }
+        return currUrl;
     }
 
     @SuppressWarnings("unused")
@@ -283,6 +347,7 @@ public class ChatFacade {
         }
     }
 
+    @SuppressWarnings("unused")
     public void sendShareLocation(String lat, String lon, String text, String chatId, final SendMsgListener sml) {
         sendIAmHere(lat, lon, text, "", chatId, sml);
     }
@@ -1187,46 +1252,46 @@ public class ChatFacade {
 
 
     public interface JsonRespListener extends RespListener {
-        public void onSuccess(JSONObject model);
+        void onSuccess(JSONObject model);
     }
 
     public interface AuthListener extends RespListener {
-        public void onSuccess(String step, String procId, String desc, String errMsg);
+        void onSuccess(String step, String procId, String desc, String errMsg);
     }
 
     public interface SetSelfListener extends UploadFileListener {
-        public void onSetSuccess();
+        void onSetSuccess();
     }
 
     public interface UploadFileListener extends RespListener {
-        public void onSuccess(String url);
+        void onSuccess(String url);
     }
 
     public interface SendMsgListener extends RespListener {
-        public void onSuccess(String serverId, long time);
+        void onSuccess(String serverId, long time);
     }
     
     public interface SendListener extends RespListener {
-        public void onSuccess();
+        void onSuccess();
     }
 
     public interface SendFileListener extends RespListener {
-        public void onSuccess(String serverId, long time, String className, String type, String url);
+        void onSuccess(String serverId, long time, String className, String type, String url);
     }
 
     public interface RespListener {
-        public void onError(Exception e, String req);
+        void onError(Exception e, String req);
     }
 
     public interface CheckListener extends RespListener{
-        public void onCheck(boolean rez);
+        void onCheck(boolean rez);
     }
 
     public interface SenderListener {
-        public void onData(JSONObject jo);
-        public void onReg(String masterKey, String UDID, boolean fullVer);
-        public void onNeedUpdate();
-        public void onRegError(Exception e);
+        void onData(JSONObject jo);
+        void onReg(String masterKey, String UDID, boolean fullVer);
+        void onNeedUpdate();
+        void onRegError(Exception e);
     }
 
 }

@@ -19,13 +19,12 @@ public class Register extends Thread{
 
     private ChatDispatcher disp;
     private KeyStore keyStore;
-    private String url, UDID, devModel, devType, clientVersion, authToken, companyId, developerId;
+    private String UDID, devModel, devType, clientVersion, authToken, companyId, developerId;
 
-    public Register(ChatDispatcher disp, String url, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
+    public Register(ChatDispatcher disp, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
         super("Register");
         this.disp = disp;
         this.developerId = developerId;
-        this.url = url;
         this.UDID = UDID;
         this.devModel = devModel;
         this.devType = devType;
@@ -39,7 +38,7 @@ public class Register extends Thread{
     public void run() {
         try {
             String key = UUID.randomUUID().toString().replace("-", "");
-            String reqUrl = url + "reg";
+            String reqUrl = disp.getUrl() + "reg";
             JSONObject jo = new JSONObject();
             jo.put("developerId", developerId);
             jo.put("udid", UDID);
@@ -56,7 +55,7 @@ public class Register extends Thread{
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
             HttpPost post = new HttpPost(reqUrl);
             post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-            String rResp = Tool.getData(HttpSigleton.getSyncClient(keyStore, 10000).execute(post));
+            String rResp = Tool.getData(HttpSigleton.getSyncClient(reqUrl, keyStore, 10000).execute(post));
             Log.v(this.getClass().getSimpleName(), "<======= " + rResp + "(" + key + ")");
             JSONObject rjo = new JSONObject(rResp);
             if (!rjo.has("deviceKey")) {
