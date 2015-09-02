@@ -13,9 +13,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -25,132 +23,43 @@ import java.util.concurrent.BlockingQueue;
  * Date: 18.02.15
  * Time: 08:40
  */
-public class Sender implements Runnable {
+public class Sender {
 
-    private BlockingQueue<SenderRequest> queue = new ArrayBlockingQueue<SenderRequest>(10);
+    private BlockingQueue<SenderRequest> packQueue = new ArrayBlockingQueue<SenderRequest>(20);
     private ChatDispatcher disp;
     private KeyStore keyStore;
-    private static boolean sending;
-    private static final Object lock = new Object();
+    private Timer timer;
+    private boolean isRunning = false;
+    private static Sender instance;
 
-    public Sender(ChatDispatcher disp, KeyStore keyStore) {
+    private Sender(ChatDispatcher disp, KeyStore keyStore) {
         this.disp = disp;
         this.keyStore = keyStore;
-        synchronized (lock) {
-            sending = false;
-        }
     }
-    
+
+    public static Sender getInstance(ChatDispatcher disp, KeyStore keyStore) {
+        if (instance == null) instance = new Sender(disp, keyStore);
+        return instance;
+    }
+
     public void send(SenderRequest sr) {
-        tryStart();
         try {
-            queue.put(sr);
+            if (ChatFacade.URL_FORM.equalsIgnoreCase(sr.getRequestURL()) && sr.getPostData() != null) {
+                packQueue.put(sr);
+            } else {
+                sendSync(sr);
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private void tryStart() {
-        synchronized (lock) {
-            if (!sending) {
-                new Thread(this).start();
-            } else {
-                Log.v(ChatDispatcher.TAG, "already sending");
-            }
-        }
-    }
-
-    @Override
-    public void run() {
-        synchronized (lock) {
-            sending = true;
-        }
-        try {
-            Log.v(ChatDispatcher.TAG, "step to send...");
-            while (ChatFacade.SID_UNDEF.equalsIgnoreCase(disp.getMasterKey())) {
-                disp.onNeedReg();
-                Log.v(ChatDispatcher.TAG, "need reg... wait send");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            List<SenderRequest> toSend = new ArrayList<SenderRequest>();
-            JSONArray arr = new JSONArray();
-            try {
-                while (queue.size() > 0) {
-                    SenderRequest sr = queue.take();
-                    Log.v(ChatDispatcher.TAG, "request " + sr.getRequestURL() + " id=" + sr.getId() + " resuming from queue");
-                    if (ChatFacade.URL_FORM.equalsIgnoreCase(sr.getRequestURL()) && sr.getPostData() != null) {
-                        JSONObject data = sr.getPostData();
-                        // ------------- TODO: костыль
-                        if (data.has("chatId") && "sender".equalsIgnoreCase(data.optString("chatId"))) {
-                            data.put("chatId", "user+sender");
-                        }
-                        // --------------
-                        data.put("cid", sr.getId());
-                        arr.put(data);
-                        toSend.add(sr);
-                    } else {
-                        doSend(sr);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (toSend.size() > 0) {
-                JSONObject rjo = null;
-                String id = UUID.randomUUID().toString().replace("-", "");
-                try {
-                    JSONObject jo = new JSONObject();
-                    jo.put("fs", arr);
-                    String fullUrl = disp.getUrl() + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
-                    HttpPost post = new HttpPost(fullUrl);
-                    post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-                    Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
-                    String response = Tool.getData(HttpSigleton.getSenderInstance(fullUrl, keyStore).execute(post));
-                    Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
-                    rjo = new JSONObject(response);
-                } catch (Exception e) {
-                    Log.v(ChatDispatcher.TAG, "<======== (" + id + ") " + e.getMessage());
-                    e.printStackTrace();
-                    for (SenderRequest sr : toSend) send(sr);
-                }
-                if (rjo != null && disp.checkResp(rjo, toSend, null)) {
-                    if (rjo.has("cr")) {
-                        JSONArray cr = rjo.optJSONArray("cr");
-                        for (int i = 0; i < cr.length(); i++) {
-                            JSONObject crj = cr.optJSONObject(i);
-                            for (SenderRequest sr : toSend) {
-                                if (sr.getId().equalsIgnoreCase(crj.optString("cid"))) {
-                                    sr.response(crj);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        } finally {
-            synchronized (lock) {
-                sending = false;
-            }
-            if (queue.size() > 0) {
-                tryStart();
-            } else {
-                Log.v(ChatDispatcher.TAG, "sender stopped!");
-            }
+        if (!isRunning) {
+            isRunning = true;
+            timer = new Timer();
+            timer.schedule(new SendTask(), 0, 1000);
         }
     }
     
-    private void doSend(final SenderRequest request) {
+    private void sendSync(final SenderRequest request) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -214,16 +123,88 @@ public class Sender implements Runnable {
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.v(this.getClass().getSimpleName(), "<======== " + e.getMessage() + " error req " + " (" + request.getId() + ")");
-                    if (e instanceof java.io.IOException || e instanceof java.lang.IllegalStateException) {
-                        send(request);
-                    }
-                    else {
-                        request.error(new Exception(e.getMessage()));
-                    }
+                    request.error(e);
+//                    if (e instanceof java.io.IOException || e instanceof java.lang.IllegalStateException) {
+//                        send(request);
+//                    }
+//                    else {
+//                        request.error(new Exception(e.getMessage()));
+//                    }
                 }
             }
         }).start();
     }
 
+    private class SendTask extends TimerTask {
+        @Override
+        public void run() {
+            try {
+                JSONArray arr = new JSONArray();
+                List<SenderRequest> toSend = new ArrayList<SenderRequest>();
+                while (packQueue.size() > 0) {
+                    try {
+                        SenderRequest sr = packQueue.take();
+                        toSend.add(sr);
+                        Log.v(ChatDispatcher.TAG, "request " + sr.getRequestURL() + " id=" + sr.getId() + " resuming from queue");
+                        JSONObject data = sr.getPostData();
+                        // ------------- TODO: костыль
+                        if (data.has("chatId") && "sender".equalsIgnoreCase(data.optString("chatId"))) {
+                            data.put("chatId", "user+sender");
+                        }
+                        // --------------
+                        data.put("cid", sr.getId());
+                        arr.put(data);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (arr.length() > 0) {
+                    JSONObject rjo = null;
+                    String id = UUID.randomUUID().toString().replace("-", "");
+                    try {
+                        JSONObject jo = new JSONObject();
+                        jo.put("fs", arr);
+                        String fullUrl = disp.getUrl() + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
+                        HttpPost post = new HttpPost(fullUrl);
+                        post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
+                        Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
+                        String response = Tool.getData(HttpSigleton.getSenderInstance(fullUrl, keyStore).execute(post));
+                        Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
+                        rjo = new JSONObject(response);
+                    } catch (Exception e) {
+                        Log.v(ChatDispatcher.TAG, "<======== (" + id + ") " + e.getMessage());
+                        e.printStackTrace();
+                        for (SenderRequest sr : toSend) {
+                            sr.error(e);
+                        }
+                    }
+                    if (rjo != null && disp.checkResp(rjo, toSend, null)) {
+                        if (rjo.has("cr")) {
+                            JSONArray cr = rjo.optJSONArray("cr");
+                            for (int i = 0; i < cr.length(); i++) {
+                                JSONObject crj = cr.optJSONObject(i);
+                                for (SenderRequest sr : toSend) {
+                                    if (sr.getId().equalsIgnoreCase(crj.optString("cid"))) {
+                                        sr.response(crj);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Log.v(ChatDispatcher.TAG, "empty queue");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
+    public void stop() {
+        if (isRunning) {
+            timer.cancel();
+            isRunning = false;
+        }
+    }
 }

@@ -25,17 +25,12 @@ public class Tool {
         }
     }
 
-    public static boolean isAddrIsIP(String addr) {
+    public static boolean isAddrIsIP(String addr) throws UnknownHostException {
         addr = addr.replace("https://", "");
         addr = addr.replace("http://", "");
         addr = addr.substring(0, addr.indexOf("/"));
-        try {
-            InetAddress ia = InetAddress.getByName(addr);
-            return addr.equalsIgnoreCase(ia.getHostAddress());
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        return false;
+        InetAddress ia = InetAddress.getByName(addr);
+        return addr.equalsIgnoreCase(ia.getHostAddress());
     }
 
     public static String getData(HttpResponse resp) throws IOException {

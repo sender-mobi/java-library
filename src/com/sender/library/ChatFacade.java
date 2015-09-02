@@ -1,6 +1,8 @@
 package com.sender.library;
 
+import android.os.Build;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
@@ -157,6 +159,11 @@ public class ChatFacade {
             }
 
             @Override
+            public void onToken(String token) {
+                listener.onToken(token);
+            }
+
+            @Override
             public void onRegError(Exception e) {
                 listener.onRegError(e);
             }
@@ -252,8 +259,38 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public String[] getSipLoginPass() {
-        return new String[] {cc.getUDID(), cc.getToken()};
+    public void getSipLogin(final String userId, final SipLoginListener sll) {
+        final JSONObject jo = new JSONObject();
+        try {
+            jo.put("userId", userId);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        cc.sendSync("get_user_dev_info", jo, new SenderRequest.HttpDataListener() {
+            @Override
+            public void onResponse(JSONObject jo) {
+                if (jo.has("devs")) {
+                    JSONArray arr = jo.optJSONArray("devs");
+                    if (arr.length() > 0) {
+                        String[] login = new String[arr.length()];
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject joi = arr.optJSONObject(i);
+                            login[i] = joi.optString("sipLogin");
+                        }
+                        sll.onSuccess(login);
+                    } else {
+                        sll.onSuccess(null);
+                    }
+                } else {
+                    sll.onSuccess(null);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                sll.onError(e, "get_user_dev_info : " + jo.toString());
+            }
+        });
     }
 
     @SuppressWarnings("unused")
@@ -648,7 +685,7 @@ public class ChatFacade {
 
                 @Override
                 public void onError(Exception e) {
-                    e.printStackTrace();
+                    sml.onError(e, model.toString());
                 }
             }));
         } catch (Exception e) {
@@ -942,6 +979,33 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
+    public void versionUpdateSet(final JsonRespListener cil) {
+        try {
+            final JSONObject jo = new JSONObject();
+            jo.put("devType", cc.getDevType());
+            jo.put("devModel", cc.getDevModel());
+            jo.put("devManufact", "");
+            jo.put("devOS", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
+            jo.put("versionOS", Tool.isAndroid() ? Build.VERSION.RELEASE : System.getProperty("os.version"));
+            jo.put("clientType", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
+            jo.put("clientVersion", cc.getClientVersion());
+            cc.sendSync("version_set", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    cil.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    cil.onError(e, "version_set : " + jo.toString());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static void checkNewMessages(String UDID, CheckListener cl) {
         checkNewMessages(UDID, 0, cl);
     }
@@ -1000,7 +1064,7 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendFile2Chat(final InputStream file, final byte[] preview, String fname, final String desc, final String length, final String chatId, final String lat, final String lon, final SendFileListener sfl) {
+    public void sendFile2Chat(final InputStream file, final byte[] preview, String fname, final boolean forceFile, final String desc, final String length, final String chatId, final String lat, final String lon, final SendFileListener sfl) {
         try {
             fname = fname.replace("\\", "/");
             if (fname.contains("/")) fname = fname.substring(fname.lastIndexOf("/")+1);
@@ -1028,7 +1092,7 @@ public class ChatFacade {
                                 @Override
                                 public void onSuccess(final String url) {
                                     try {
-                                        doSendFileInfo(ffname, extPart, desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, previewUrl, getMediaClass(extPart), chatId, sfl);
+                                        doSendFileInfo(ffname, extPart, desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, previewUrl, getMediaClass(extPart, forceFile), chatId, sfl);
                                     } catch (Exception e) {
                                         sfl.onError(e, null);
                                     }
@@ -1065,7 +1129,7 @@ public class ChatFacade {
                             });
                         } else {
                             try {
-                                doSendFileInfo(ffname, extPart, desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, null, getMediaClass(extPart), chatId, sfl);
+                                doSendFileInfo(ffname, extPart, desc == null ? "" : desc, length == null ? String.valueOf(file.available() / 1024) : length, url, null, getMediaClass(extPart, forceFile), chatId, sfl);
                             } catch (Exception e) {
                                 sfl.onError(e, null);
                             }
@@ -1146,7 +1210,8 @@ public class ChatFacade {
         }
     }
 
-    private String getMediaClass(String ext) {
+    private String getMediaClass(String ext, boolean forceFile) {
+        if (forceFile) return CLASS_FILE_ROUTE;
         if ("png".equalsIgnoreCase(ext) || "jpg".equalsIgnoreCase(ext) || "jpeg".equalsIgnoreCase(ext) || "gif".equalsIgnoreCase(ext)) {
             return CLASS_IMAGE_ROUTE;
         } else if ("mp3".equalsIgnoreCase(ext)) {
@@ -1260,6 +1325,10 @@ public class ChatFacade {
         void onSuccess(JSONObject model);
     }
 
+    public interface SipLoginListener extends RespListener {
+        void onSuccess(String[] login);
+    }
+
     public interface AuthListener extends RespListener {
         void onSuccess(String step, String procId, String desc, String errMsg);
     }
@@ -1296,6 +1365,7 @@ public class ChatFacade {
         void onData(JSONObject jo);
         void onReg(String masterKey, String UDID, boolean fullVer);
         void onNeedUpdate();
+        void onToken(String token);
         void onRegError(Exception e);
     }
 

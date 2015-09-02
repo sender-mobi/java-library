@@ -11,6 +11,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.security.KeyStore;
 
 /**
@@ -26,14 +27,14 @@ public class HttpSigleton {
 
     protected HttpSigleton() {}
 
-    public static HttpClient getSenderInstance(String addr, KeyStore keyStore) {
+    public static HttpClient getSenderInstance(String addr, KeyStore keyStore) throws UnknownHostException {
         if(senderClient == null) {
             senderClient = getClient(addr, keyStore, true, 10000, 10000);
         }
         return senderClient;
     }
 
-    public static HttpClient getCometInstance(String addr, KeyStore keyStore) {
+    public static HttpClient getCometInstance(String addr, KeyStore keyStore) throws UnknownHostException {
         if(cometClient == null) {
             cometClient = getClient(addr, keyStore, true, 20000, 60000);
         }
@@ -41,7 +42,7 @@ public class HttpSigleton {
         return cometClient;
     }
 
-    public static HttpClient getSyncClient(String addr, KeyStore keyStore, int readTimeout) {
+    public static HttpClient getSyncClient(String addr, KeyStore keyStore, int readTimeout) throws UnknownHostException {
         return getClient(addr, keyStore, false, 10000, readTimeout);
     }
 
@@ -52,7 +53,7 @@ public class HttpSigleton {
         }
     }
 
-    private static DefaultHttpClient getClient(String addr, KeyStore keyStore, boolean isKeepAlive, int connectTimeouat, int readTimeout) {
+    private static DefaultHttpClient getClient(String addr, KeyStore keyStore, boolean isKeepAlive, int connectTimeouat, int readTimeout) throws UnknownHostException {
         DefaultHttpClient client = null;
         HttpParams httpParameters = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(httpParameters, connectTimeouat);

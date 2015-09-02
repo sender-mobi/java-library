@@ -31,7 +31,6 @@ public class ChatDispatcher {
     private String developerKey;
     private String developerId;
 
-    private Sender sender;
     private Comet comet;
     private String token;
     private String cometId;
@@ -63,7 +62,6 @@ public class ChatDispatcher {
         this.UDID = hmacDigest(devId, developerKey, "HmacSHA1");
         this.protocolVersion = protocolVersion;
         this.sml = sml;
-        sender = new Sender(this, keyStore);
     }
 
     public static ChatDispatcher getInstanse(
@@ -87,7 +85,6 @@ public class ChatDispatcher {
                 instanse.onNeedReg();
             }
         }
-
         return instanse;
     }
 
@@ -98,10 +95,11 @@ public class ChatDispatcher {
     public void end() {
         setCometId(null);
         comet.disconnect();
+        Sender.getInstance(this, keyStore).stop();
     }
     
     public void send(SenderRequest request) {
-        sender.send(request);
+        Sender.getInstance(this, keyStore).send(request);
         startComet();
     }
 
@@ -221,15 +219,16 @@ public class ChatDispatcher {
     public boolean checkResp(JSONObject rjo, List<SenderRequest> toSend, SenderRequest request) {
         if (ChatDispatcher.CODE_OK.equalsIgnoreCase(rjo.optString("code"))) return true;
         if (ChatDispatcher.CODE_NEW_CHALLENGE.equalsIgnoreCase(rjo.optString("code"))) {
-            if (toSend != null) for (SenderRequest sr : toSend) sender.send(sr);
-            if (request != null) sender.send(request);
+            if (toSend != null) for (SenderRequest sr : toSend) send(sr);
+            if (request != null) send(request);
             String challenge = rjo.optString("challenge");
             String t = ChatDispatcher.hmacDigest(challenge, getMasterKey(), "HmacSHA256");
             Log.v(ChatDispatcher.TAG, "new token: " + t);
             setToken(t);
+            sml.onToken(t);
         } else if (ChatDispatcher.CODE_INVALID_UDID.equalsIgnoreCase(rjo.optString("code"))) {
-            if (toSend != null) for (SenderRequest sr : toSend) sender.send(sr);
-            if (request != null) sender.send(request);
+            if (toSend != null) for (SenderRequest sr : toSend) send(sr);
+            if (request != null) send(request);
             onNeedReg();
         } else if (ChatDispatcher.CODE_NEED_UPDATE.equalsIgnoreCase(rjo.optString("code"))) {
             onNeedUpdate();
@@ -240,5 +239,21 @@ public class ChatDispatcher {
 
     public boolean isAlive() {
         return getCometId() != null;
+    }
+
+    public String getDevModel() {
+        return devModel;
+    }
+
+    public String getDevType() {
+        return devType;
+    }
+
+    public String getClientVersion() {
+        return clientVersion;
+    }
+
+    public int getProtocolVersion() {
+        return protocolVersion;
     }
 }
