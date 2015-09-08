@@ -836,13 +836,23 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendRead(final String packetId, String from, final String chatId) {
+    public void sendRead(final String packetId, String from, final String chatId, final JsonRespListener rrl) {
         try {
             JSONObject model = new JSONObject();
             model.put("packetId", packetId);
             model.put("from", from);
-            JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
-            cc.send(new SenderRequest(URL_FORM, form2Send));
+            final JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject data) {
+                    rrl.onSuccess(data);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    rrl.onError(e, form2Send.toString());
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
