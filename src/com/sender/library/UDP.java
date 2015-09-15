@@ -12,7 +12,7 @@ import java.net.InetAddress;
  */
 public class UDP {
 
-    private static final String ip = "10.0.2.217";
+    private static final String ip = "api-pre-udp.sender.mobi";
     private static final int port = 15616;
 
     public static void send(final String req, final int timeout, final SendListener sl) {
@@ -24,7 +24,7 @@ public class UDP {
                 try {
                     clientSocket = new DatagramSocket();
                     byte[] sendData = req.getBytes();
-                    android.util.Log.v(ChatDispatcher.TAG, "----> " + req + " to " + ip + ":" + port);
+                    Log.v(ChatDispatcher.TAG, "----> " + req + " to " + ip + ":" + port);
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(ip), port);
                     clientSocket.send(sendPacket);
                     if (timeout > 0 && sl != null) {
@@ -33,7 +33,7 @@ public class UDP {
                             public void run() {
                                 try {
                                     Thread.sleep(timeout);
-                                    android.util.Log.v(ChatDispatcher.TAG, "<---- timeout :(");
+                                    Log.v(ChatDispatcher.TAG, "<---- timeout :(");
                                     sl.onTimeout();
                                 } catch (InterruptedException ignored) {}
                             }
@@ -45,10 +45,10 @@ public class UDP {
                     clientSocket.receive(receivePacket);
                     if (waiter != null) waiter.interrupt();
                     String resp = new String(receivePacket.getData());
-                    android.util.Log.v(ChatDispatcher.TAG, "<---- " + (resp.contains("}") ? resp.substring(0, resp.lastIndexOf("}") + 1) : resp));
+                    Log.v(ChatDispatcher.TAG, "<---- " + (resp.contains("}") ? resp.substring(0, resp.lastIndexOf("}") + 1) : resp));
                     if (sl != null) sl.onSuccess(resp);
                 } catch (Exception e) {
-                    android.util.Log.v(ChatDispatcher.TAG, "<---- error: " + e.getMessage());
+                    Log.v(ChatDispatcher.TAG, "<---- error: " + e.getMessage());
                     if (sl != null) sl.onError(e);
                     else e.printStackTrace();
                 } finally {

@@ -131,15 +131,15 @@ public class ChatFacade {
                         jo.put("class", formClass);
                     }
                     if (formClass.equalsIgnoreCase(ChatFacade.CLASS_IP)) {
-                        IP_POOL.clear();
-                        JSONObject model = new JSONObject("model");
-                        Iterator keys = model.keys();
-                        while (keys.hasNext()) {
-                            String ip = model.optString(keys.next().toString());
-                            if (ip != null && ip.length() > 6) {
-                                IP_POOL.add(new IP(ip));
-                            }
-                        }
+//                        IP_POOL.clear();
+//                        JSONObject model = jo.optJSONObject("model");
+//                        Iterator keys = model.keys();
+//                        while (keys.hasNext()) {
+//                            String ip = model.optString(keys.next().toString());
+//                            if (ip != null && ip.length() > 6) {
+//                                IP_POOL.add(new IP(ip));
+//                            }
+//                        }
                         return;
                     }
                 } catch (Exception e) {
