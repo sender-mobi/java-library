@@ -47,7 +47,7 @@ public class Register extends Thread{
             jo.put("devModel", devModel);
             jo.put("devName", devModel);
             jo.put("clientVersion", clientVersion);
-            jo.put("devOS", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
+            jo.put("devOS", Tool.isAndroid() ? "android" : System.getProperty("os.name").toUpperCase().contains("MAC") ? "mac" : "linux");
             jo.put("clientType", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
             jo.put("versionOS", Tool.isAndroid() ? Build.VERSION.RELEASE : System.getProperty("os.version"));
             jo.put("authToken", authToken);
