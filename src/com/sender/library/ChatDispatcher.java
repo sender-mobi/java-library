@@ -79,7 +79,6 @@ public class ChatDispatcher {
                               ChatFacade.SenderListener sml) {
         if (instanse == null) instanse = new ChatDispatcher(developerId, developerKey, masterKey, devId, devModel, devType, clientVersion, protocolVersion, authToken, companyId, keyStore, sml);
         instanse.masterKey = masterKey;
-//        instanse.startComet();
         synchronized (lock) {
             if (ChatFacade.SID_UNDEF.equalsIgnoreCase(masterKey) && !regProcess) {
                 instanse.onNeedReg();
@@ -96,11 +95,12 @@ public class ChatDispatcher {
         setCometId(null);
         comet.disconnect();
         Sender.getInstance(this, keyStore).stop();
+        onDisconnected();
     }
     
     public void send(SenderRequest request) {
         Sender.getInstance(this, keyStore).send(request);
-        startComet();
+        startComet(false);
     }
 
     public void sendSync(String url, JSONObject data, SenderRequest.HttpDataListener listener) {
@@ -149,6 +149,15 @@ public class ChatDispatcher {
 
     public void onMessage(JSONObject jo) {
         sml.onData(jo);
+    }
+
+    public void onConnected() {
+        sml.onConnected();
+    }
+
+    public void onDisconnected() {
+        Sender.getInstance(this, keyStore).stop();
+        sml.onDisconnected();
     }
 
     public synchronized String getCometId() {
@@ -205,14 +214,15 @@ public class ChatDispatcher {
         this.token = token;
     }
 
-    public void startComet() {
+    public void startComet(boolean isShort) {
         if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
-            comet = new Comet(this, keyStore);
+            comet = new Comet(this, keyStore, isShort);
             setCometId(comet.getCometId());
             comet.start();
         } else {
             Log.v(TAG, "comet already running");
+            onConnected();
         }
     }
 

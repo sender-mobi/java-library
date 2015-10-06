@@ -111,16 +111,16 @@ public class ChatFacade {
 
     @SuppressWarnings("unused")
     public ChatFacade(String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
-        this(URL_PROD_WWW, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, listener);
+        this(URL_PROD_WWW, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, false, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, KeyStore keystore, SenderListener listener) throws Exception {
-        this(url, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, keystore, listener);
+    public ChatFacade(String url, String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, KeyStore keystore, boolean isShort, SenderListener listener) throws Exception {
+        this(url, developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, null, null, keystore, isShort, listener);
     }
     
     @SuppressWarnings("unused")
-    public ChatFacade(String url, String developerId, String developerKey,String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, final SenderListener listener) throws Exception {
+    public ChatFacade(String url, String developerId, String developerKey,String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, boolean isShort, final SenderListener listener) throws Exception {
         currUrl = url;
         this.cc = ChatDispatcher.getInstanse(developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, new SenderListener() {
             @Override
@@ -167,8 +167,18 @@ public class ChatFacade {
             public void onRegError(Exception e) {
                 listener.onRegError(e);
             }
+
+            @Override
+            public void onConnected() {
+                listener.onConnected();
+            }
+
+            @Override
+            public void onDisconnected() {
+                listener.onDisconnected();
+            }
         });
-        this.cc.startComet();
+        this.cc.startComet(isShort);
     }
 
     public static String getUrl() {
@@ -659,6 +669,49 @@ public class ChatFacade {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), ".contact."+compUserId, chatId);
             cc.send(new SenderRequest(URL_FORM, jo));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void callCompanies(final JsonRespListener jrl) {
+        try {
+            final JSONObject model = new JSONObject();
+            cc.sendSync("get_companies_cf", model, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    jrl.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    jrl.onError(e, "get_companies_cf " + model);
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void getUserInfo(String userId, final JsonRespListener jrl) {
+        try {
+            final JSONObject model = new JSONObject();
+            model.put("userId", userId);
+            cc.sendSync("get_user_info", model, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    jrl.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    jrl.onError(e, "get_user_info " + model);
+                }
+            });
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1377,6 +1430,8 @@ public class ChatFacade {
         void onNeedUpdate();
         void onToken(String token);
         void onRegError(Exception e);
+        void onConnected();
+        void onDisconnected();
     }
 
 }

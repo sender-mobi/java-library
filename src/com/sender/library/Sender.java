@@ -203,6 +203,7 @@ public class Sender {
 
     public void stop() {
         if (isRunning) {
+            Log.v(ChatDispatcher.TAG, "stopped!");
             timer.cancel();
             isRunning = false;
         }
