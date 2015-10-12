@@ -272,6 +272,30 @@ public class ChatFacade {
         }
     }
 
+    public void getUserBySipLogin(final String sipLogin, final SipUserListener sul) {
+        final JSONObject jo = new JSONObject();
+        try {
+            jo.put("sipLogin", sipLogin);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        cc.sendSync("get_sip_info", jo, new SenderRequest.HttpDataListener() {
+            @Override
+            public void onResponse(JSONObject jo) {
+                if (jo.has("userId")) {
+                    sul.onSuccess(jo.optString("userId"));
+                } else {
+                    sul.onError(new Exception("not user data"), "get_sip_info");
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                sul.onError(e, "get_sip_info : " + jo.toString());
+            }
+        });
+    }
+
     @SuppressWarnings("unused")
     public void getSipLogin(final String userId, final SipLoginListener sll) {
         final JSONObject jo = new JSONObject();
@@ -1394,6 +1418,10 @@ public class ChatFacade {
 
     public interface SipLoginListener extends RespListener {
         void onSuccess(String[] login);
+    }
+
+    public interface SipUserListener extends RespListener {
+        void onSuccess(String userId);
     }
 
     public interface AuthListener extends RespListener {
