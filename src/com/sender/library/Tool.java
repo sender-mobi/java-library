@@ -2,6 +2,8 @@ package com.sender.library;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -43,4 +45,7 @@ public class Tool {
         }
     }
 
+    public static boolean checkServer(String url) throws IOException {
+        return 200 == new DefaultHttpClient().execute(new HttpGet(url + "ping")).getStatusLine().getStatusCode();
+    }
 }

@@ -1,6 +1,7 @@
 package com.sender.library;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONArray;
@@ -20,7 +21,6 @@ public class Comet extends Thread {
     private ChatDispatcher disp;
     private String lastSrvBatchId;
     private KeyStore keyStore;
-    public static int MAX_EMPTY_RESP = 2;
     public static int MAX_RETRY = 3;
     private boolean isShort = false;
     private String id = UUID.randomUUID().toString().replace("-", "");
@@ -28,6 +28,10 @@ public class Comet extends Thread {
     public Comet(ChatDispatcher disp, KeyStore keyStore, boolean isShort) {
         this.keyStore = keyStore;
         this.disp = disp;
+        this.isShort = isShort;
+    }
+
+    public void setIsShort(boolean isShort) {
         this.isShort = isShort;
     }
 
@@ -39,7 +43,8 @@ public class Comet extends Thread {
     public void run() {
         Log.v(ChatDispatcher.TAG, "comet started id = " + id);
         try {
-            int k = 0, r = 0;
+            int r = 0;
+            boolean close = false;
             while (disp.getCometId() != null) {
                 if (!id.equalsIgnoreCase(disp.getCometId())) {
                     Log.v(ChatDispatcher.TAG, "duplicate comet: my id = " + id + " active = " + disp.getCometId());
@@ -50,12 +55,6 @@ public class Comet extends Thread {
                     Log.v(ChatDispatcher.TAG, "need reg... wait comet");
                     sleep(1000);
                 }
-                if (k > MAX_EMPTY_RESP) {
-                    k = 0;
-                    Log.v(ChatDispatcher.TAG, "disconnected after server inactive. Id: " + id);
-                    disp.setCometId(null);
-                    continue;
-                }
                 if (r > MAX_RETRY) {
                     r = 0;
                     Log.v(ChatDispatcher.TAG, "disconnected after server not responded. Id: " + id);
@@ -65,14 +64,17 @@ public class Comet extends Thread {
                 Log.v(ChatDispatcher.TAG, "step comet... id: " + id);
                 JSONObject jo = new JSONObject();
                 jo.put("lbi", lastSrvBatchId);
-                if (isShort) jo.put("connection", "close");
+                if (isShort && close) jo.put("connection", "close");
                 jo.put("meta", new JSONObject());
                 String fullUrl = disp.getUrl() + "comet?udid=" + disp.getUDID() + "&token=" + disp.getToken();
                 HttpPost post = new HttpPost(fullUrl);
                 post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
+                boolean checkResp = true;
                 try {
-                    HttpResponse rr = HttpSigleton.getCometInstance(fullUrl, keyStore).execute(post);
+                    if (!disp.isConnStateOk() && Tool.checkServer(disp.getUrl(false))) disp.onConnected();
+                    HttpClient client = HttpSigleton.getCometInstance(fullUrl, keyStore);
+                    HttpResponse rr = client.execute(post);
                     if (rr.getStatusLine().getStatusCode() != 200) {
                         throw new Exception("HTTP CODE " + rr.getStatusLine().getStatusCode());
                     }
@@ -85,30 +87,39 @@ public class Comet extends Thread {
                         Log.v(ChatDispatcher.TAG, "duplicate comet: my id = " + id + " (code 5)");
                         return;
                     }
-                    if (disp.checkResp(rjo, null, null)) {
+                    checkResp = disp.checkResp(rjo, null, null);
+                    if (checkResp) {
                         if (rjo.has("bi")) {
                             lastSrvBatchId = rjo.optString("bi");
                         }
                         if (rjo.has("fs")) {
-                            k = 0;
                             JSONArray fs = rjo.optJSONArray("fs");
                             for (int i = 0; i < fs.length(); i++) {
                                 JSONObject fsj = fs.optJSONObject(i);
                                 disp.onMessage(fsj);
                             }
-                            sleep(500);
+                            if (!isShort) sleep(500);
                         } else {
-                            sleep(3000);
-                            k++;
+                            if (!isShort) sleep(3000);
                         }
                     } else {
-                        sleep(1000);
+                        if (!isShort) sleep(1000);
                     }
                 } catch (Exception e) {
+                    disp.onDisconnected();
                     Log.v(ChatDispatcher.TAG, "Comet error: " + e.getMessage() + " id = " + id);
                     r++;
                     e.printStackTrace();
-                    sleep(3000);
+                    if (!isShort) sleep(3000);
+                }
+                if (isShort) {
+                    if (checkResp) {
+                        if (close) {
+                            disp.setCometId(null);
+                        } else {
+                            close = true;
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -117,6 +128,10 @@ public class Comet extends Thread {
         disp.setCometId(null);
         disp.onDisconnected();
         Log.v(ChatDispatcher.TAG, "comet ending id = " + id);
+    }
+
+    public boolean isShort() {
+        return isShort;
     }
 
     public void disconnect() {

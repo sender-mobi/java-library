@@ -181,6 +181,10 @@ public class ChatFacade {
         this.cc.startComet(isShort);
     }
 
+    public void startComet(boolean isShort) {
+        cc.startComet(isShort);
+    }
+
     public static String getUrl() {
         Collections.shuffle(IP_POOL);
         for (IP ip: IP_POOL) {

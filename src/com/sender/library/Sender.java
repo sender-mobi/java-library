@@ -193,7 +193,7 @@ public class Sender {
                         }
                     }
                 } else {
-                    Log.v(ChatDispatcher.TAG, "empty queue");
+//                    Log.v(ChatDispatcher.TAG, "empty queue");
                 }
             } catch (Exception e) {
                 e.printStackTrace();

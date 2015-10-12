@@ -35,6 +35,7 @@ public class ChatDispatcher {
     private String token;
     private String cometId;
     private static boolean regProcess;
+    private boolean connStateOk = false;
     private static final Object lock = new Object();
 
 
@@ -87,8 +88,16 @@ public class ChatDispatcher {
         return instanse;
     }
 
+    public boolean isConnStateOk() {
+        return connStateOk;
+    }
+
     public String getUrl() {
-        return "https://" + ChatFacade.getUrl() + "/" + protocolVersion + "/";
+        return getUrl(true);
+    }
+
+    public String getUrl(boolean full) {
+        return "https://" + ChatFacade.getUrl() + "/" + (full ? protocolVersion + "/" : "");
     }
 
     public void end() {
@@ -100,7 +109,7 @@ public class ChatDispatcher {
     
     public void send(SenderRequest request) {
         Sender.getInstance(this, keyStore).send(request);
-        startComet(false);
+        startComet();
     }
 
     public void sendSync(String url, JSONObject data, SenderRequest.HttpDataListener listener) {
@@ -152,10 +161,14 @@ public class ChatDispatcher {
     }
 
     public void onConnected() {
+        Log.v(TAG, "onConnected");
+        connStateOk = true;
         sml.onConnected();
     }
 
     public void onDisconnected() {
+        Log.v(TAG, "onDisconnected");
+        connStateOk = false;
         Sender.getInstance(this, keyStore).stop();
         sml.onDisconnected();
     }
@@ -214,6 +227,14 @@ public class ChatDispatcher {
         this.token = token;
     }
 
+    public void startComet() {
+        if (getCometId() != null && comet != null) {
+            startComet(comet.isShort());
+        } else {
+            startComet(false);
+        }
+    }
+
     public void startComet(boolean isShort) {
         if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
@@ -221,6 +242,7 @@ public class ChatDispatcher {
             setCometId(comet.getCometId());
             comet.start();
         } else {
+            comet.setIsShort(isShort);
             Log.v(TAG, "comet already running");
             onConnected();
         }
