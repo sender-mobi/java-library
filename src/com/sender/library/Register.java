@@ -19,9 +19,9 @@ public class Register extends Thread{
 
     private ChatDispatcher disp;
     private KeyStore keyStore;
-    private String UDID, devModel, devType, clientVersion, authToken, companyId, developerId;
+    private String UDID, devModel, devType, clientVersion, authToken, developerId;
 
-    public Register(ChatDispatcher disp, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, String companyId, KeyStore keyStore) {
+    public Register(ChatDispatcher disp, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, KeyStore keyStore) {
         super("Register");
         this.disp = disp;
         this.developerId = developerId;
@@ -30,7 +30,6 @@ public class Register extends Thread{
         this.devType = devType;
         this.clientVersion = clientVersion;
         this.authToken = authToken;
-        this.companyId = companyId;
         this.keyStore = keyStore;
     }
 
@@ -51,7 +50,7 @@ public class Register extends Thread{
             jo.put("clientType", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
             jo.put("versionOS", Tool.isAndroid() ? Build.VERSION.RELEASE : System.getProperty("os.version"));
             jo.put("authToken", authToken);
-            jo.put("companyId", companyId);
+            jo.put("companyId", disp.getCompanyId());
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
             HttpPost post = new HttpPost(reqUrl);
             post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));

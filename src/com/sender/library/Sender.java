@@ -104,6 +104,9 @@ public class Sender {
                         Log.v(ChatDispatcher.TAG, "========> (" + request.getId() + ") " + rurl + " " + request.getPostData());
                         HttpPost post = new HttpPost(rurl);
                         post.addHeader("Accept-Encoding", "gzip");
+                        if (disp.getCompanyId() != null) {
+                            post.addHeader("X-Platform", disp.getCompanyId());
+                        }
                         post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
                         resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(post));
                     } else {                                                // -------------------- get

@@ -65,8 +65,11 @@ public class ChatFacade {
     public static final String CLASS_CHESS = ".chess.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
     public static final String CLASS_NOTIFICATION_ADD = ".addChatNotification.sender";
+    public static final String CLASS_NOTIF_ADD = ".addChat.sender";
     public static final String CLASS_NOTIFICATION_DEL = ".delChatNotification.sender";
+    public static final String CLASS_NOTIF_DEL = ".delChat.sender";
     public static final String CLASS_NOTIFICATION_LEAVE = ".leaveChatNotification.sender";
+    public static final String CLASS_NOTIF_LEAVE = ".leaveChat.sender";
     public static final String CLASS_LEAVE_CHAT = ".leaveChat.sender";
     public static final String CLASS_STICKER = ".sticker.sender";
     public static final String CLASS_DEVICES = ".devices.sender";

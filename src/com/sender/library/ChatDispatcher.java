@@ -148,7 +148,7 @@ public class ChatDispatcher {
             regProcess = true;
         }
         masterKey = ChatFacade.SID_UNDEF;
-        new Register(this, developerId, UDID, devModel, devType, clientVersion, authToken, companyId, keyStore).start();
+        new Register(this, developerId, UDID, devModel, devType, clientVersion, authToken, keyStore).start();
     }
 
     public void onNeedUpdate() {
@@ -164,6 +164,10 @@ public class ChatDispatcher {
         Log.v(TAG, "onConnected");
         connStateOk = true;
         sml.onConnected();
+    }
+
+    public String getCompanyId() {
+        return companyId;
     }
 
     public void onDisconnected() {
