@@ -20,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ChatFacade {
 
+    public static final String CLASS_TRACK_USER_ACTION = ".clientMonitoring.sender";
     public static final String CLASS_TEXT_ROUTE = "text.routerobot.sender";
     public static final String CLASS_FILE_ROUTE = "file.routerobot.sender";
     public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
@@ -60,6 +61,7 @@ public class ChatFacade {
     public static final String CLASS_SENDMONEY = ".sendMoney.sender";
     public static final String CLASS_P2P_TRANSFER = "transfer.p2p.sender";
     public static final String CLASS_SEND_MONITORING = ".monitoringData.sender";
+    public static final String CLASS_SEND_UI_MONITORING = ".uiMonitoring.sender";
     public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
     public static final String CLASS_SHOP = ".worldOfTanks.sender";
     public static final String CLASS_CHESS = ".chess.sender";
@@ -617,6 +619,26 @@ public class ChatFacade {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendUIMonitoringData(JSONObject jo) {
+        Agregator.getInstance(new Agregator.AgListener() {
+            @Override
+            public void onPack(JSONArray arr) {
+                try {
+                    final JSONObject model = new JSONObject();
+                    model.put("type", cc.getDevType());
+                    model.put("model", cc.getDevModel());
+                    model.put("ver", cc.getClientVersion());
+                    model.put("udid", cc.getUDID());
+                    model.put("events", arr);
+                    JSONObject form2Send = getForm2Send(model, CLASS_SEND_UI_MONITORING, senderChatId);
+                    cc.send(new SenderRequest(URL_FORM, form2Send));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 120).add(jo);
     }
 
     @SuppressWarnings("unused")
