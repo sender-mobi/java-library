@@ -24,6 +24,13 @@ public class SenderRequest {
         this.hdl = hdl;
     }
 
+    public SenderRequest(String requestURL, JSONObject postData, String id, HttpDataListener hdl) {
+        this.requestURL = requestURL;
+        this.postData = postData;
+        this.id = id;
+        this.hdl = hdl;
+    }
+
     public SenderRequest(String requestURL, InputStream postData, HttpDataListener hdl) {
         this.requestURL = requestURL;
         this.data = postData;

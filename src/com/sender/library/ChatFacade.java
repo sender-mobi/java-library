@@ -771,12 +771,12 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendMessage(final String text, final String chatId, final SendMsgListener sml) {
+    public void sendMessage(final String text, final String localId, final String chatId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
-            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
+            cc.send(new SenderRequest(URL_FORM, form2Send, localId, new SenderRequest.HttpDataListener() {
 
                 @Override
                 public void onResponse(JSONObject jo) {
