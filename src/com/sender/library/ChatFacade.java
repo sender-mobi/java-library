@@ -86,6 +86,10 @@ public class ChatFacade {
     public static final String CLASS_IP = ".ip.sender";
     public static final String CLASS_START_SYNC = ".startSyncCt.sender";
     public static final String CLASS_FULL_VERSION = ".fullVersion.sender";
+    public static final String CLASS_CALL_RING = ".callRing.sender";
+    public static final String CLASS_CALL_STATE = ".callState.sender";
+    public static final String CLASS_CALL_RUN = ".callRun.sender";
+    public static final String CLASS_CALL_CLOSE = ".callClose.sender";
 
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
@@ -798,7 +802,45 @@ public class ChatFacade {
             e.printStackTrace();
         }
     }
-    
+
+    @SuppressWarnings("unused")
+    public void sipCallRing(final String userId, final SendMsgListener sml) {
+        try {
+            final JSONObject model = new JSONObject();
+            model.put("userId", userId);
+            JSONObject form2Send = getForm2Send(model, CLASS_CALL_RING, senderChatId);
+            cc.send(new SenderRequest(URL_FORM, form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sipCallRun(final String userId, final String devId, final SendMsgListener sml) {
+        try {
+            final JSONObject model = new JSONObject();
+            model.put("userId", userId);
+            model.put("devId", devId);
+            JSONObject form2Send = getForm2Send(model, CLASS_CALL_RUN, senderChatId);
+            cc.send(new SenderRequest(URL_FORM, form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void sipCallClose(final String userId, final String devId, final SendMsgListener sml) {
+        try {
+            final JSONObject model = new JSONObject();
+            model.put("userId", userId);
+            model.put("devId", devId);
+            JSONObject form2Send = getForm2Send(model, CLASS_CALL_CLOSE, senderChatId);
+            cc.send(new SenderRequest(URL_FORM, form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 //    @SuppressWarnings("unused")
 //    public void getUserData(final String userId, final UserDataListener udl) {
 //        try {
