@@ -829,11 +829,12 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sipCallClose(final String userId, final String devId, final SendMsgListener sml) {
+    public void sipCallClose(final String userId, final String devId, final String code, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("userId", userId);
             model.put("devId", devId);
+            model.put("code", code);
             JSONObject form2Send = getForm2Send(model, CLASS_CALL_CLOSE, senderChatId);
             cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
