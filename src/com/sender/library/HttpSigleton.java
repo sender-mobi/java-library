@@ -36,7 +36,7 @@ public class HttpSigleton {
 
     public static HttpClient getCometInstance(String addr, KeyStore keyStore) throws UnknownHostException {
         if(cometClient == null) {
-            cometClient = getClient(addr, keyStore, true, 20000, 60000);
+            cometClient = getClient(addr, keyStore, true, 10000, 60000);
         }
 
         return cometClient;

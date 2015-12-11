@@ -258,6 +258,10 @@ public class ChatFacade {
         }
     }
 
+    public void setLogFile(String path) {
+        Log.logPath = path;
+    }
+
     @SuppressWarnings("unused")
     public void callFullVersion(boolean enable) {
         try {
@@ -1121,7 +1125,7 @@ public class ChatFacade {
         try {
             final JSONObject jo = new JSONObject();
             jo.put("t", t);
-            cc.sendSync("global_search", jo, new SenderRequest.HttpDataListener() {
+            cc.sendSync("search", jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     cil.onSuccess(jo);
@@ -1129,7 +1133,7 @@ public class ChatFacade {
 
                 @Override
                 public void onError(Exception e) {
-                    cil.onError(e, "global_search : " + jo.toString());
+                    cil.onError(e, "search : " + jo.toString());
                 }
             });
         } catch (Exception e) {

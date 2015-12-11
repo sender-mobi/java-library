@@ -13,12 +13,12 @@ import java.util.Date;
 public class Log {
 
     public static boolean verbose = false;
-    public static boolean toFile = false;
+    public static String logPath;
 
     public static void v(String tag, String msg) {
-        if (toFile) {
+        if (logPath != null) {
             try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter("/storage/sdcard0/sender.log", true));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(logPath, true));
                 writer.write(new SimpleDateFormat("dd.MM.yy HH.mm.ss.SSS").format(new Date())+" ["+tag+"] "+msg+ "\n");
                 writer.flush();
                 writer.close();
