@@ -90,6 +90,8 @@ public class ChatFacade {
     public static final String CLASS_CALL_STATE = ".callState.sender";
     public static final String CLASS_CALL_RUN = ".callRun.sender";
     public static final String CLASS_CALL_CLOSE = ".callClose.sender";
+    public static final String CLASS_SEND_PROXY = ".proxySend.sender";
+    public static final String CLASS_GET_PROXY = ".proxy.sender";
 
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
@@ -1083,6 +1085,16 @@ public class ChatFacade {
             }
             model.put("bleList", arr);
             JSONObject form2Send = getForm2Send(model, CLASS_SET_LOCATION, senderChatId);
+            cc.send(new SenderRequest(URL_FORM, form2Send));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void send2MyDevices(JSONObject data) {
+        try {
+            JSONObject form2Send = getForm2Send(data, CLASS_SEND_PROXY, senderChatId);
             cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
