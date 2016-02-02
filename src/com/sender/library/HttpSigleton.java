@@ -10,9 +10,13 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,17 +29,18 @@ public class HttpSigleton {
     private static DefaultHttpClient senderClient = null;
     private static DefaultHttpClient cometClient = null;
 
-    protected HttpSigleton() {}
+    protected HttpSigleton() {
+    }
 
     public static HttpClient getSenderInstance(String addr, KeyStore keyStore) throws UnknownHostException {
-        if(senderClient == null) {
+        if (senderClient == null) {
             senderClient = getClient(addr, keyStore, true, 10000, 10000);
         }
         return senderClient;
     }
 
     public static HttpClient getCometInstance(String addr, KeyStore keyStore) throws UnknownHostException {
-        if(cometClient == null) {
+        if (cometClient == null) {
             cometClient = getClient(addr, keyStore, true, 10000, 60000);
         }
 
@@ -55,6 +60,13 @@ public class HttpSigleton {
 
     private static DefaultHttpClient getClient(String addr, KeyStore keyStore, boolean isKeepAlive, int connectTimeouat, int readTimeout) throws UnknownHostException {
         DefaultHttpClient client = null;
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, null, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
         HttpParams httpParameters = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(httpParameters, connectTimeouat);
         HttpConnectionParams.setSoTimeout(httpParameters, readTimeout);
