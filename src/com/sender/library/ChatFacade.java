@@ -83,6 +83,7 @@ public class ChatFacade {
     public static final String CLASS_AUTH = ".authNative.sender";
     public static final String CLASS_GAME_WINNIE = ".winnieThePoohHoney.sender";
     public static final String CLASS_VIBRO = ".vibro.sender";
+    public static final String CLASS_UPDATE_STORAGE = ".updateStorage.sender";
     public static final String CLASS_IP = ".ip.sender";
     public static final String CLASS_START_SYNC = ".startSyncCt.sender";
     public static final String CLASS_FULL_VERSION = ".fullVersion.sender";
@@ -1154,6 +1155,49 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
+    public void setStorage(final String t, final JsonRespListener cil) {
+        try {
+            final JSONObject jo = new JSONObject();
+            jo.put("type", "set");
+            jo.put("value", t);
+            cc.sendSync("storage", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    cil.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    cil.onError(e, "storage : " + jo.toString());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public void getStorage(final StorageGetListener cil) {
+        try {
+            final JSONObject jo = new JSONObject();
+            jo.put("type", "get");
+            cc.sendSync("storage", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    cil.onSuccess(jo.optString("storage"));
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    cil.onError(e, "storage : " + jo.toString());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public void versionUpdateSet(final JsonRespListener cil) {
         try {
             final JSONObject jo = new JSONObject();
@@ -1518,6 +1562,10 @@ public class ChatFacade {
 
     public interface UploadFileListener extends RespListener {
         void onSuccess(String url);
+    }
+
+    public interface StorageGetListener extends RespListener {
+        void onSuccess(String data);
     }
 
     public interface SendMsgListener extends RespListener {
