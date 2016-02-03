@@ -85,6 +85,7 @@ public class Comet extends Thread {
                     JSONObject rjo = new JSONObject(response);
                     if (ChatDispatcher.CODE_DUPLICATE_COMET.equalsIgnoreCase(rjo.optString("code"))) {
                         Log.v(ChatDispatcher.TAG, "duplicate comet: my id = " + id + " (code 5)");
+                        disp.setCometId(null);
                         return;
                     }
                     checkResp = disp.checkResp(rjo, null, null);

@@ -782,10 +782,11 @@ public class ChatFacade {
     }
 
     @SuppressWarnings("unused")
-    public void sendMessage(final String text, final String localId, final String chatId, final SendMsgListener sml) {
+    public void sendMessage(final String text, boolean encrypted, final String localId, final String chatId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);
+            if (encrypted) model.put("encrypted", 1);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
             cc.send(new SenderRequest(URL_FORM, form2Send, localId, new SenderRequest.HttpDataListener() {
 
