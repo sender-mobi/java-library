@@ -117,7 +117,7 @@ public class ChatFacade {
     public static final String URL_FORM = "fsubmit";
     public static final String SID_UNDEF = "undef";
     public static final String senderChatId = "sender";
-    private static final String CLASS_STATUS_SET = "oStatusSet";
+    private static final String CLASS_STATUS_SET = ".oStatusSet.sender";
     private static final String STATUS_ONLINE = "online";
     private static final String STATUS_OFFLINE = "offline";
 
@@ -273,7 +273,7 @@ public class ChatFacade {
             model.put("companyId", compId);
             model.put("status", online ? STATUS_ONLINE : STATUS_OFFLINE);
             JSONObject form2Send = getForm2Send(model, CLASS_STATUS_SET, userSender);
-            cc.send(new SenderRequest(URL_SEND_STATUS,
+            cc.send(new SenderRequest(URL_FORM,
                     form2Send));
         } catch (Exception e) {
             e.printStackTrace();
