@@ -128,15 +128,16 @@ public class ChatFacade {
 
     /**
      * Constructor
-     * @param developerId provides Sender's developers
-     * @param developerKey provides Sender's developers
-     * @param sid stored masterKey (received from onReg call)
-     * @param imei unique device Id
-     * @param devModel device model
-     * @param devType const: "phone"
-     * @param clientVersion app version
+     *
+     * @param developerId     provides Sender's developers
+     * @param developerKey    provides Sender's developers
+     * @param sid             stored masterKey (received from onReg call)
+     * @param imei            unique device Id
+     * @param devModel        device model
+     * @param devType         const: "phone"
+     * @param clientVersion   app version
      * @param protocolVersoin implemented protocol version (curr: 8)
-     * @param listener instance of SenderListener
+     * @param listener        instance of SenderListener
      * @throws Exception
      */
     public ChatFacade(String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, SenderListener listener) throws Exception {
@@ -145,18 +146,19 @@ public class ChatFacade {
 
     /**
      * Constructor
-     * @param url server url (use ChatFacade.URL_PROD_WWW for production)
-     * @param developerId provides Sender's developers
-     * @param developerKey provides Sender's developers
-     * @param sid stored masterKey (received from onReg call)
-     * @param imei unique device Id
-     * @param devModel device model
-     * @param devType const: "phone"
-     * @param clientVersion app version
+     *
+     * @param url             server url (use ChatFacade.URL_PROD_WWW for production)
+     * @param developerId     provides Sender's developers
+     * @param developerKey    provides Sender's developers
+     * @param sid             stored masterKey (received from onReg call)
+     * @param imei            unique device Id
+     * @param devModel        device model
+     * @param devType         const: "phone"
+     * @param clientVersion   app version
      * @param protocolVersoin implemented protocol version (curr: 8)
-     * @param keystore storage with trusted server keys or null (default)
-     * @param isShort false if need to keep persistent connection
-     * @param listener instance of SenderListener
+     * @param keystore        storage with trusted server keys or null (default)
+     * @param isShort         false if need to keep persistent connection
+     * @param listener        instance of SenderListener
      * @throws Exception
      */
     public ChatFacade(String url, String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, KeyStore keystore, boolean isShort, SenderListener listener) throws Exception {
@@ -165,20 +167,21 @@ public class ChatFacade {
 
     /**
      * Constructor
-     * @param url server url (use ChatFacade.URL_PROD_WWW for production)
-     * @param developerId provides Sender's developers
-     * @param developerKey provides Sender's developers
-     * @param sid stored masterKey (received from onReg call)
-     * @param imei unique device Id
-     * @param devModel device model
-     * @param devType const: "phone"
-     * @param clientVersion app version
+     *
+     * @param url             server url (use ChatFacade.URL_PROD_WWW for production)
+     * @param developerId     provides Sender's developers
+     * @param developerKey    provides Sender's developers
+     * @param sid             stored masterKey (received from onReg call)
+     * @param imei            unique device Id
+     * @param devModel        device model
+     * @param devType         const: "phone"
+     * @param clientVersion   app version
      * @param protocolVersoin implemented protocol version (curr: 8)
-     * @param authToken token for server-side transparent authentication
-     * @param companyId provides Sender's developers
-     * @param keystore storage with trusted server keys or null (default)
-     * @param isShort false if need to keep persistent connection
-     * @param listener instance of SenderListener
+     * @param authToken       token for server-side transparent authentication
+     * @param companyId       provides Sender's developers
+     * @param keystore        storage with trusted server keys or null (default)
+     * @param isShort         false if need to keep persistent connection
+     * @param listener        instance of SenderListener
      * @throws Exception
      */
     public ChatFacade(String url, String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, boolean isShort, final SenderListener listener) throws Exception {
@@ -244,6 +247,7 @@ public class ChatFacade {
 
     /**
      * Open connection to server
+     *
      * @param isShort true if connection must be closed after messages from server will be received
      */
     public void startComet(boolean isShort) {
@@ -252,6 +256,7 @@ public class ChatFacade {
 
     /**
      * Get current server url. Using for change server ip dynamically
+     *
      * @return server address
      */
     public static String getUrl() {
@@ -288,6 +293,7 @@ public class ChatFacade {
 
     /**
      * Call Tic Tac Toe game form
+     *
      * @param chatId chat id
      */
     public void callTicTacToe(String chatId) {
@@ -303,6 +309,7 @@ public class ChatFacade {
 
     /**
      * Call Tic Tac Toe game form
+     *
      * @param chatId chat id
      */
     public void callWinnie(String chatId) {
@@ -330,6 +337,7 @@ public class ChatFacade {
 
     /**
      * Set status for operator in current company
+     *
      * @param compId company Id
      * @param online status
      */
@@ -348,6 +356,7 @@ public class ChatFacade {
 
     /**
      * Set path of log file
+     *
      * @param path path
      */
     public void setLogFile(String path) {
@@ -356,6 +365,7 @@ public class ChatFacade {
 
     /**
      * Change API mode
+     *
      * @param enable true if full version
      */
     public void callFullVersion(boolean enable) {
@@ -371,6 +381,7 @@ public class ChatFacade {
 
     /**
      * Call form for change chat properties
+     *
      * @param chatId chat id
      */
     public void callSetChatInfo(String chatId) {
@@ -385,8 +396,9 @@ public class ChatFacade {
 
     /**
      * Get userId by SIP login (for voice)
+     *
      * @param sipLogin login
-     * @param sul listener
+     * @param sul      listener
      */
     public void getUserBySipLogin(final String sipLogin, final SipUserListener sul) {
         final JSONObject jo = new JSONObject();
@@ -414,8 +426,9 @@ public class ChatFacade {
 
     /**
      * Get SIP login by UserId
+     *
      * @param userId userId
-     * @param sll listener
+     * @param sll    listener
      */
     public void getSipLogin(final String userId, final SipLoginListener sll) {
         final JSONObject jo = new JSONObject();
@@ -453,6 +466,7 @@ public class ChatFacade {
 
     /**
      * Call Shop form
+     *
      * @param chatId chat Id
      */
     public void callShop(String chatId) {
@@ -467,6 +481,7 @@ public class ChatFacade {
 
     /**
      * Call Chess game form
+     *
      * @param chatId chat id
      */
     public void callChess(String chatId) {
@@ -483,9 +498,10 @@ public class ChatFacade {
 
     /**
      * Send sticker
-     * @param id sticker id
+     *
+     * @param id     sticker id
      * @param chatId chat id
-     * @param sml listener
+     * @param sml    listener
      */
     public void sendSticker(String id, String chatId, final SendMsgListener sml) {
         try {
@@ -516,7 +532,8 @@ public class ChatFacade {
 
     /**
      * Send custom form
-     * @param model form data
+     *
+     * @param model     form data
      * @param className form class
      */
     public void send(JSONObject model, String className) {
@@ -525,11 +542,12 @@ public class ChatFacade {
 
     /**
      * Send custom form
-     * @param model form data
+     *
+     * @param model     form data
      * @param className form class
-     * @param chatId chat id
-     * @param procId corezoid process id
-     * @param sml listener
+     * @param chatId    chat id
+     * @param procId    corezoid process id
+     * @param sml       listener
      */
     public void sendForm(JSONObject model, String className, String chatId, String procId, final SendMsgListener sml) {
         final JSONObject form2Send = getForm2Send(model, className, chatId == null ? senderChatId : chatId, procId);
@@ -554,10 +572,11 @@ public class ChatFacade {
 
     /**
      * Send custom form
-     * @param model form data
+     *
+     * @param model     form data
      * @param className form class
-     * @param chatId chat id
-     * @param procId corezoid process id
+     * @param chatId    chat id
+     * @param procId    corezoid process id
      */
     private void send(JSONObject model, String className, String chatId, String procId) {
         try {
@@ -568,6 +587,12 @@ public class ChatFacade {
         }
     }
 
+    /**
+     * Send custom json
+     *
+     * @param urlPart url of request
+     * @param data    form data
+     */
     private void send(String urlPart, JSONObject data) {
         try {
             cc.send(new SenderRequest(urlPart, data));
@@ -578,11 +603,12 @@ public class ChatFacade {
 
     /**
      * Send location
-     * @param lat latitude
-     * @param lon longitude
-     * @param text description
+     *
+     * @param lat    latitude
+     * @param lon    longitude
+     * @param text   description
      * @param chatId chat id
-     * @param sml listener
+     * @param sml    listener
      */
     public void sendShareLocation(String lat, String lon, String text, String chatId, final SendMsgListener sml) {
         sendIAmHere(lat, lon, text, "", chatId, sml);
@@ -590,9 +616,10 @@ public class ChatFacade {
 
     /**
      * Send vibro message
-     * @param chatId chat id
+     *
+     * @param chatId  chat id
      * @param isBegin true if vibration start, false if end
-     * @param sml listener
+     * @param sml     listener
      */
     public void sendVibro(String chatId, boolean isBegin, final SendMsgListener sml) {
         try {
@@ -623,8 +650,9 @@ public class ChatFacade {
 
     /**
      * Contacts synchronization
+     *
      * @param users Json array of user (See API description for data format)
-     * @param scl listener
+     * @param scl   listener
      */
     public void syncContacts(JSONArray users, final JsonRespListener scl) {
         try {
@@ -648,8 +676,9 @@ public class ChatFacade {
 
     /**
      * Find user by phone
+     *
      * @param phone phone (international format)
-     * @param scl listener
+     * @param scl   listener
      */
     public void getContactsByPhone(String phone, final JsonRespListener scl) {
         try {
@@ -673,6 +702,7 @@ public class ChatFacade {
 
     /**
      * Dialog's synchronization
+     *
      * @param scl listener
      */
     public void syncDialogs(final JsonRespListener scl) {
@@ -695,6 +725,7 @@ public class ChatFacade {
 
     /**
      * Update user information
+     *
      * @param contact user info (See API description for data format)
      */
     public void updateContact(JSONObject contact) {
@@ -702,7 +733,8 @@ public class ChatFacade {
             JSONArray arr = new JSONArray().put(contact);
             cc.sendSync("set_ct", new JSONObject().put("cts", arr), new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(JSONObject data) {}
+                public void onResponse(JSONObject data) {
+                }
 
                 @Override
                 public void onError(Exception e) {
@@ -716,6 +748,7 @@ public class ChatFacade {
 
     /**
      * Remove user from contact list
+     *
      * @param userId user id
      */
     public void deleteContact(String userId) {
@@ -726,7 +759,8 @@ public class ChatFacade {
             JSONArray arr = new JSONArray().put(jo);
             cc.sendSync("set_ct", new JSONObject().put("cts", arr), new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(JSONObject data) {}
+                public void onResponse(JSONObject data) {
+                }
 
                 @Override
                 public void onError(Exception e) {
@@ -740,6 +774,7 @@ public class ChatFacade {
 
     /**
      * Send allert form
+     *
      * @param chatId
      */
     public void sendAlert(final String chatId) {
@@ -753,6 +788,7 @@ public class ChatFacade {
 
     /**
      * Send data from scanned QR
+     *
      * @param qr
      */
     public void sendQR(final String qr) {
@@ -768,8 +804,9 @@ public class ChatFacade {
 
     /**
      * Add user to chat
-     * @param chatId chat id
-     * @param userId user id
+     *
+     * @param chatId   chat id
+     * @param userId   user id
      * @param listener listener
      */
     public void addToChat(final String chatId, String userId, JsonRespListener listener) {
@@ -778,8 +815,9 @@ public class ChatFacade {
 
     /**
      * Add mutiple user to chat
-     * @param chatId chat id
-     * @param userIds array of user id's
+     *
+     * @param chatId   chat id
+     * @param userIds  array of user id's
      * @param listener listener
      */
     public void addToChat(final String chatId, String[] userIds, JsonRespListener listener) {
@@ -799,8 +837,9 @@ public class ChatFacade {
 
     /**
      * Remove user from chat
-     * @param chatId chat id
-     * @param userId user id
+     *
+     * @param chatId   chat id
+     * @param userId   user id
      * @param listener listener
      */
     public void delFromChat(final String chatId, String userId, JsonRespListener listener) {
@@ -818,6 +857,7 @@ public class ChatFacade {
 
     /**
      * Leave chat
+     *
      * @param chatId chat id
      */
     public void leaveChat(final String chatId) {
@@ -832,8 +872,9 @@ public class ChatFacade {
 
     /**
      * Create group chat
-     * @param chatId chat Id
-     * @param users array of user id's
+     *
+     * @param chatId   chat Id
+     * @param users    array of user id's
      * @param listener listener
      */
     private void setChat(final String chatId, JSONArray users, final JsonRespListener listener) {
@@ -860,6 +901,7 @@ public class ChatFacade {
 
     /**
      * Send monitorng data
+     *
      * @param jo data (See API description for data format)
      */
     public void sendUIMonitoringData(JSONObject jo) {
@@ -884,6 +926,14 @@ public class ChatFacade {
 
     /**
      * Send monitorng data
+     *
+     * @param deltaPower
+     * @param period     monitoring period
+     * @param req_out    quantity of sent requests
+     * @param req_in     quantity of handled requests
+     * @param apps       using applications like ["com.facebook","ua.privatbank.it.inhouse.Market","com.viber.voip"]
+     * @param sl         connection listener
+     *                   ]
      */
     public void sendMonitoringData(final float deltaPower, long period, int req_out, int req_in, List<String> apps, final SendListener sl) {
         try {
@@ -916,6 +966,11 @@ public class ChatFacade {
 
     /**
      * Send monitorng data
+     *
+     * @param className form class
+     * @param packedId  packet id
+     * @param timeReq   required time
+     * @param reqModel  required JSON model
      */
     public void sendEscalation(String className, String packedId, String timeReq, JSONObject reqModel) {
         try {
@@ -931,7 +986,11 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send localization
+     *
+     * @param locale language locale
+     */
     public void sendLocale(String locale) {
         try {
             if (locale == null || locale.length() == 0) locale = Locale.getDefault().getLanguage();
@@ -945,7 +1004,13 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send user actions in app
+     *
+     * @param userId id of user
+     * @param chatId id of current chat
+     */
+    @Deprecated
     public void sendState(String cat1, String cat2, String cat3, String userId, String chatId) {
         try {
             JSONObject model = new JSONObject();
@@ -962,7 +1027,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Add company to contacts
+     *
+     * @param compUserId id of called company
+     * @param chatId     id of company chat
+     */
     public void callCompany(String chatId, String compUserId) {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), ".contact." + compUserId, chatId);
@@ -972,7 +1042,11 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Get contacts of companies forms after autorization
+     *
+     * @param jrl connection listener
+     */
     public void callCompanies(final JsonRespListener jrl) {
         try {
             final JSONObject model = new JSONObject();
@@ -993,7 +1067,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Get user information
+     *
+     * @param userId user id
+     * @param jrl    connection listener
+     */
     public void getUserInfo(String userId, final JsonRespListener jrl) {
         try {
             final JSONObject model = new JSONObject();
@@ -1015,7 +1094,15 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send user message
+     *
+     * @param text      message text
+     * @param encrypted is message encrypted
+     * @param localId   user local id
+     * @param chatId    message chat id
+     * @param sml       connection listener
+     */
     public void sendMessage(final String text, boolean encrypted, final String localId, final String chatId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
@@ -1045,7 +1132,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Make sip call
+     *
+     * @param userId user id
+     * @param sml    connection listener
+     */
     public void sipCallRing(final String userId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
@@ -1057,7 +1149,13 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Make sip call
+     *
+     * @param userId user id
+     * @param devId  developer id
+     * @param sml    connection listener
+     */
     public void sipCallRun(final String userId, final String devId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
@@ -1070,7 +1168,14 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Close sip call
+     *
+     * @param userId user id
+     * @param devId  developer id
+     * @param code   connection code
+     * @param sml    connection listener
+     */
     public void sipCallClose(final String userId, final String devId, final String code, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
@@ -1113,7 +1218,11 @@ public class ChatFacade {
 //        }
 //    }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send user token
+     *
+     * @param token user token
+     */
     public void sendToken(final String token) {
         try {
             JSONObject rjo = new JSONObject();
@@ -1125,7 +1234,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Get history of chat
+     *
+     * @param chatId id of chat
+     * @param jrl    connection listener
+     */
     public void getHistory(final String chatId, final JsonRespListener jrl) {
         try {
             final JSONObject rjo = new JSONObject();
@@ -1148,7 +1262,14 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * User authentication
+     *
+     * @param action user action
+     * @param value  phone number
+     * @param procId id of procces
+     * @param al     connection listener
+     */
     public void nativeAuth(final String action, final String value, final String procId, final AuthListener al) {
         try {
             final JSONObject model = new JSONObject();
@@ -1178,7 +1299,16 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Modify chat profile
+     *
+     * @param icon   chat icon
+     * @param type   chat type
+     * @param name   chat name
+     * @param desc   chat description
+     * @param chatId chat id
+     * @param ufl    file upload listener
+     */
     public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId, final UploadFileListener ufl) {
         if (icon != null) {
             uploadFile(icon, type, new UploadFileListener() {
@@ -1226,7 +1356,14 @@ public class ChatFacade {
 
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send message read
+     *
+     * @param packetId packet id
+     * @param from     message from id
+     * @param chatId   chat id
+     * @param rrl      connection response listener
+     */
     public void sendRead(final String packetId, String from, final String chatId, final JsonRespListener rrl) {
         try {
             JSONObject model = new JSONObject();
@@ -1249,7 +1386,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Get chat info
+     *
+     * @param chatId chat id
+     * @param cil    connection response listener
+     */
     public void getChatInfo(final String chatId, final JsonRespListener cil) {
         try {
             final JSONObject jo = new JSONObject();
@@ -1270,7 +1412,11 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send keyboard typing event
+     *
+     * @param chatId chat id
+     */
     public void sendTyping(String chatId) {
         try {
             JSONObject rjo = new JSONObject();
@@ -1282,7 +1428,11 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Check if users online
+     *
+     * @param userIdS user ids
+     */
     public void checkOnline(String[] userIdS) {
         try {
             JSONObject model = new JSONObject();
@@ -1296,7 +1446,11 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Set user online
+     *
+     * @param onlineKey user online key
+     */
     public void sendOnline(String onlineKey) {
         try {
             cc.send(new SenderRequest("online?online_key=" + onlineKey));
@@ -1305,7 +1459,14 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Set user coordinates
+     *
+     * @param lat       latitude
+     * @param lon       longitude
+     * @param accuracy  accuracy of GPRS
+     * @param blePoints map of bluetooth points
+     */
     public void sendCoordinates(double lat, double lon, double accuracy, Map<String, String> blePoints) {
         try {
             JSONObject model = new JSONObject();
@@ -1327,7 +1488,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Send messages to other devices
+     *
+     * @param data devices data
+     */
     public void send2MyDevices(JSONObject data) {
         try {
             JSONObject form2Send = getForm2Send(data, CLASS_SEND_PROXY, senderChatId);
@@ -1337,7 +1503,17 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Send GPRS coordinates message
+     *
+     * @param lat       latitude
+     * @param lon       longitude
+     * @param message   string message
+     * @param mapImgUrl image map url
+     * @param chatId    chat id
+     * @param sml       response connection listener
+     */
     private void sendIAmHere(String lat, String lon, String message, String mapImgUrl, String chatId, final SendMsgListener sml) {
         try {
             JSONObject model = new JSONObject();
@@ -1368,7 +1544,13 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Search companies
+     *
+     * @param t   search request
+     * @param cil response connection listener
+     */
     public void searchCompanies(final String t, final JsonRespListener cil) {
         try {
             final JSONObject jo = new JSONObject();
@@ -1389,7 +1571,13 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Sending and receiving user storage data
+     *
+     * @param t   data value
+     * @param cil response connection listener
+     */
     public void setStorage(final String t, final JsonRespListener cil) {
         try {
             final JSONObject jo = new JSONObject();
@@ -1411,7 +1599,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Getting  user storage data
+     *
+     * @param cil response connection listener
+     */
     public void getStorage(final StorageGetListener cil) {
         try {
             final JSONObject jo = new JSONObject();
@@ -1432,7 +1625,12 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Version updating
+     *
+     * @param cil response connection listener
+     */
     public void versionUpdateSet(final JsonRespListener cil) {
         try {
             final JSONObject jo = new JSONObject();
@@ -1459,7 +1657,13 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+
+    /**
+     * Check new messages
+     *
+     * @param UDID user UDID
+     * @param cl   response connection listener
+     */
     public static void checkNewMessages(String UDID, CheckListener cl) {
         checkNewMessages(UDID, 0, cl);
     }
@@ -1492,6 +1696,9 @@ public class ChatFacade {
         });
     }
 
+    /**
+     * Generate JSON model from formClass
+     */
     private JSONObject getForm2Send(JSONObject model, String formClass, String chatId) {
         return getForm2Send(model, formClass, chatId, null);
     }
@@ -1517,7 +1724,18 @@ public class ChatFacade {
         return rez;
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Send file to chat
+     *
+     * @param file    inputstream of file
+     * @param preview bytes of preview
+     * @param fname   file name
+     * @param desc    file description
+     * @param length  file length
+     * @param lat     user latitude
+     * @param lon     user longitude
+     * @param sfl     connection uploading listener
+     */
     public void sendFile2Chat(final InputStream file, final byte[] preview, String fname, final boolean forceFile, final String desc, final String length, final String chatId, final String lat, final String lon, final SendFileListener sfl) {
         try {
             fname = fname.replace("\\", "/");
@@ -1600,11 +1818,21 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Cancel sanding
+     */
     public void cancelSend() {
+
 //        cc.cancelSend();
     }
 
+    /**
+     * Upload file
+     *
+     * @param file inputstream of file
+     * @param type type of file
+     * @param ufl  connection uploading listener
+     */
     public void uploadFile(final InputStream file, final String type, final UploadFileListener ufl) {
         try {
             final String req = "upload?filetype=" + type + "&sid=" + cc.getSid();
@@ -1676,7 +1904,9 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Recharge phone
+     */
     public void callRechargePhone() {
         try {
             JSONObject jo = getForm2Send(new JSONObject(), CLASS_RECHARGE_PHONE, senderChatId);
@@ -1686,7 +1916,18 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Set user self data
+     *
+     * @param name        new user name
+     * @param iconUrl     user avatar url
+     * @param icon        avatar inputstream
+     * @param type        user type
+     * @param description user description
+     * @param msgKey      user msg key
+     * @param payKey      user payment key
+     * @param ufl         connection response listener
+     */
     public void setMySelfData(
             final String name,
             final String iconUrl,
@@ -1740,7 +1981,11 @@ public class ChatFacade {
         }
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * GEt user self data
+     *
+     * @param jrl connection response listener
+     */
     public void getMySelfData(final JsonRespListener jrl) {
         try {
             cc.sendSync("selfinfo_get", new JSONObject(), new SenderRequest.HttpDataListener() {
@@ -1761,62 +2006,103 @@ public class ChatFacade {
     }
 
 
-    @SuppressWarnings("unused")
+    /**
+     * Check if chatdispatcher is connected
+     */
     public boolean isConnected() {
         return cc.isAlive();
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Stop chatdispatcher
+     */
     public void stop() {
         cc.end();
     }
 
     // ----------------------------------------------------------------------------------------------------------------
 
-
+    /**
+     * Uploading and connection response  listener
+     */
     public interface JsonRespListener extends RespListener {
         void onSuccess(JSONObject model);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface SipLoginListener extends RespListener {
         void onSuccess(String[] login);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface SipUserListener extends RespListener {
         void onSuccess(String userId);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface AuthListener extends RespListener {
         void onSuccess(String step, String procId, String desc, String errMsg);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface SetSelfListener extends UploadFileListener {
         void onSetSuccess();
     }
+
+    /**
+     * Uploading and connection response  listener
+     */
 
     public interface UploadFileListener extends RespListener {
         void onSuccess(String url);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface StorageGetListener extends RespListener {
         void onSuccess(String data);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface SendMsgListener extends RespListener {
         void onSuccess(String serverId, long time);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface SendListener extends RespListener {
         void onSuccess();
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface SendFileListener extends RespListener {
         void onSuccess(String serverId, long time, String className, String type, String url);
     }
 
+    /**
+     * Uploading and connection response  listener
+     */
     public interface RespListener {
         void onError(Exception e, String req);
     }
+
+    /**
+     * Uploading and connection response  listener
+     */
 
     public interface CheckListener extends RespListener {
         void onCheck(boolean rez);
@@ -1829,15 +2115,17 @@ public class ChatFacade {
 
         /**
          * Will be called when message from server received
+         *
          * @param jo message (see API description for details)
          */
         void onData(JSONObject jo);
 
         /**
          * Will be called when registration in API will be finished
+         *
          * @param masterKey masterKey. Must be stored in SharedPreferences
-         * @param UDID server device Id. Must be stored in SharedPreferences
-         * @param fullVer true if using full version API
+         * @param UDID      server device Id. Must be stored in SharedPreferences
+         * @param fullVer   true if using full version API
          */
         void onReg(String masterKey, String UDID, boolean fullVer);
 
@@ -1848,12 +2136,14 @@ public class ChatFacade {
 
         /**
          * Will be called when current session key will expired. Using only for voice
+         *
          * @param token
          */
         void onToken(String token);
 
         /**
          * Will be called when registration failed
+         *
          * @param e exception
          */
         void onRegError(Exception e);
