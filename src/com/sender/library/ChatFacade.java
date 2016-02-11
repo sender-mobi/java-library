@@ -701,6 +701,34 @@ public class ChatFacade {
     }
 
     /**
+     * Get company operators
+     *
+     * @param companyId company id
+     * @param scl       listener
+     */
+    public void getCompanyOperators(String companyId, final JsonRespListener scl) {
+        try {
+            final JSONObject jo = new JSONObject();
+            jo.put("companyId", companyId);
+            jo.put("chatId", userSender);
+
+            cc.sendSync("get_operators", jo, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {
+                    scl.onSuccess(jo);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    scl.onError(e, "get_operators : " + jo.toString());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Dialog's synchronization
      *
      * @param scl listener
