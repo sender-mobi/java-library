@@ -754,11 +754,10 @@ public class ChatFacade {
     /**
      * Update user information
      *
-     * @param contact user info (See API description for data format)
+     * @param arr users info (See API description for data format)
      */
-    public void updateContact(JSONObject contact) {
+    public void updateContacts(JSONArray arr) {
         try {
-            JSONArray arr = new JSONArray().put(contact);
             cc.sendSync("set_ct", new JSONObject().put("cts", arr), new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject data) {
