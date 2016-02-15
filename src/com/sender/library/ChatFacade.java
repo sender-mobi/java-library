@@ -1127,11 +1127,12 @@ public class ChatFacade {
      *
      * @param text      message text
      * @param encrypted is message encrypted
+     * @param pkey public key (for encrypted message)
      * @param localId   user local id
      * @param chatId    message chat id
      * @param sml       connection listener
      */
-    public void sendMessage(final String text, boolean encrypted, final String localId, final String chatId, final SendMsgListener sml) {
+    public void sendMessage(final String text, boolean encrypted, final String pkey, final String localId, final String chatId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);

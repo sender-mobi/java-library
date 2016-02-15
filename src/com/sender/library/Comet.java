@@ -1,7 +1,5 @@
 package com.sender.library;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONArray;
@@ -73,14 +71,14 @@ public class Comet extends Thread {
                 boolean checkResp = true;
                 try {
                     if (!disp.isConnStateOk() && Tool.checkServer(disp.getUrl(false))) disp.onConnected();
-                    HttpClient client = HttpSigleton.getCometInstance(fullUrl, keyStore);
-                    HttpResponse rr = client.execute(post);
-                    if (rr.getStatusLine().getStatusCode() != 200) {
-                        throw new Exception("HTTP CODE " + rr.getStatusLine().getStatusCode());
-                    }
-                    disp.onConnected();
-                    r = 0;
-                    String response = Tool.getData(rr);
+//                    HttpClient client = HttpSigleton.getCometInstance(fullUrl, keyStore);
+//                    HttpResponse rr = client.execute(post);
+//                    if (rr.getStatusLine().getStatusCode() != 200) {
+//                        throw new Exception("HTTP CODE " + rr.getStatusLine().getStatusCode());
+//                    }
+//                    disp.onConnected();
+//                    r = 0;
+                    String response = com.sender.library.HttpClient.getInstance().post(fullUrl, disp.getCompanyId(), jo.toString());//Tool.getData(rr);
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     JSONObject rjo = new JSONObject(response);
                     if (ChatDispatcher.CODE_DUPLICATE_COMET.equalsIgnoreCase(rjo.optString("code"))) {
@@ -136,7 +134,7 @@ public class Comet extends Thread {
     }
 
     public void disconnect() {
-        HttpSigleton.invalidateCometInstance();
+//        HttpSigleton.invalidateCometInstance();
         interrupt();
     }
 }

@@ -1,17 +1,8 @@
 package com.sender.library;
 
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.KeyStore;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -68,52 +59,13 @@ public class Sender {
                     String rurl = disp.getUrl() + request.getRequestURL() + (request.getRequestURL().contains("?") ? "&" : "?") + "udid=" + disp.getUDID() + "&token=" + disp.getToken();
                     if (request.getData() != null && request.getData().available() > 0) {                        // -------------------- binary post
                         Log.v(this.getClass().getSimpleName(), "========> " + rurl + " with binary data " + " (" + request.getId() + ")");
-                        URL purl = new URL(rurl);
-                        HttpURLConnection con;
-                        if (purl.getProtocol().toLowerCase().equals("https")) {
-                            con = (HttpsURLConnection) purl.openConnection();
-                        } else {
-                            con = (HttpURLConnection) purl.openConnection();
-                        }
-                        con.setUseCaches(false);
-                        con.setDoOutput(true);
-                        con.setDoInput(true);
-                        con.setRequestMethod("POST");
-                        con.setRequestProperty("Content-type", "image/png");
-                        con.connect();
-                        int bufferSize = 1024;
-                        byte[] buffer = new byte[bufferSize];
-                        int len;
-                        OutputStream out = con.getOutputStream();
-                        while ((len = request.getData().read(buffer)) != -1) {
-                            out.write(buffer, 0, len);
-                        }
-                        out.flush();
-                        out.close();
-                        request.getData().close();
-                        StringBuilder sb = new StringBuilder();
-                        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
-                        String nextLine;
-                        while ((nextLine = in.readLine()) != null) {
-                            sb.append(nextLine);
-                        }
-                        in.close();
-                        con.disconnect();
-                        resp = sb.toString();
+                        resp = HttpClient.getInstance().postImg(rurl, request.getData());
                     } else if (request.getPostData() != null) {             // -------------------- post
                         Log.v(ChatDispatcher.TAG, "========> (" + request.getId() + ") " + rurl + " " + request.getPostData());
-                        HttpPost post = new HttpPost(rurl);
-                        post.addHeader("Accept-Encoding", "gzip");
-                        if (disp.getCompanyId() != null) {
-                            post.addHeader("X-Platform", disp.getCompanyId());
-                        }
-                        post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
-                        resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(post));
+                        resp = HttpClient.getInstance().post(rurl, disp.getCompanyId(), request.getPostData().toString());
                     } else {                                                // -------------------- get
                         Log.v(this.getClass().getSimpleName(), "========> (" + request.getId() + ") " + rurl);
-                        HttpGet get = new HttpGet(rurl);
-                        get.addHeader("Accept-Encoding", "gzip");
-                        resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(get));
+                        resp = HttpClient.getInstance().get(rurl, disp.getCompanyId());
                     }
                     Log.v(this.getClass().getSimpleName(), "<======= (" + request.getId() + ") " + resp);
                     JSONObject jo = new JSONObject(resp);
@@ -127,16 +79,89 @@ public class Sender {
                     e.printStackTrace();
                     Log.v(this.getClass().getSimpleName(), "<======== " + e.getMessage() + " error req " + " (" + request.getId() + ")");
                     request.error(e);
-//                    if (e instanceof java.io.IOException || e instanceof java.lang.IllegalStateException) {
-//                        send(request);
-//                    }
-//                    else {
-//                        request.error(new Exception(e.getMessage()));
-//                    }
                 }
             }
         }).start();
     }
+
+//    private void sendSync(final SenderRequest request) {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    String resp;
+//                    String rurl = disp.getUrl() + request.getRequestURL() + (request.getRequestURL().contains("?") ? "&" : "?") + "udid=" + disp.getUDID() + "&token=" + disp.getToken();
+//                    if (request.getData() != null && request.getData().available() > 0) {                        // -------------------- binary post
+//                        Log.v(this.getClass().getSimpleName(), "========> " + rurl + " with binary data " + " (" + request.getId() + ")");
+//                        URL purl = new URL(rurl);
+//                        HttpURLConnection con;
+//                        if (purl.getProtocol().toLowerCase().equals("https")) {
+//                            con = (HttpsURLConnection) purl.openConnection();
+//                        } else {
+//                            con = (HttpURLConnection) purl.openConnection();
+//                        }
+//                        con.setUseCaches(false);
+//                        con.setDoOutput(true);
+//                        con.setDoInput(true);
+//                        con.setRequestMethod("POST");
+//                        con.setRequestProperty("Content-type", "image/png");
+//                        con.connect();
+//                        int bufferSize = 1024;
+//                        byte[] buffer = new byte[bufferSize];
+//                        int len;
+//                        OutputStream out = con.getOutputStream();
+//                        while ((len = request.getData().read(buffer)) != -1) {
+//                            out.write(buffer, 0, len);
+//                        }
+//                        out.flush();
+//                        out.close();
+//                        request.getData().close();
+//                        StringBuilder sb = new StringBuilder();
+//                        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+//                        String nextLine;
+//                        while ((nextLine = in.readLine()) != null) {
+//                            sb.append(nextLine);
+//                        }
+//                        in.close();
+//                        con.disconnect();
+//                        resp = sb.toString();
+//                    } else if (request.getPostData() != null) {             // -------------------- post
+//                        Log.v(ChatDispatcher.TAG, "========> (" + request.getId() + ") " + rurl + " " + request.getPostData());
+//                        HttpPost post = new HttpPost(rurl);
+//                        post.addHeader("Accept-Encoding", "gzip");
+//                        if (disp.getCompanyId() != null) {
+//                            post.addHeader("X-Platform", disp.getCompanyId());
+//                        }
+//                        post.setEntity(new ByteArrayEntity(request.getPostData().toString().getBytes("UTF-8")));
+//                        resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(post));
+//                    } else {                                                // -------------------- get
+//                        Log.v(this.getClass().getSimpleName(), "========> (" + request.getId() + ") " + rurl);
+//                        HttpGet get = new HttpGet(rurl);
+//                        get.addHeader("Accept-Encoding", "gzip");
+//                        resp = Tool.getData(HttpSigleton.getSyncClient(rurl, keyStore, 60000).execute(get));
+//                    }
+//                    Log.v(this.getClass().getSimpleName(), "<======= (" + request.getId() + ") " + resp);
+//                    JSONObject jo = new JSONObject(resp);
+//                    if (disp.checkResp(jo, null, request)) {
+//                        request.response(jo);
+//                    }
+//                } catch (OutOfMemoryError e) {
+//                    e.printStackTrace();
+//                    request.error(new Exception("file is too large"));
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    Log.v(this.getClass().getSimpleName(), "<======== " + e.getMessage() + " error req " + " (" + request.getId() + ")");
+//                    request.error(e);
+////                    if (e instanceof java.io.IOException || e instanceof java.lang.IllegalStateException) {
+////                        send(request);
+////                    }
+////                    else {
+////                        request.error(new Exception(e.getMessage()));
+////                    }
+//                }
+//            }
+//        }).start();
+//    }
 
     private class SendTask extends TimerTask {
         @Override
@@ -168,10 +193,10 @@ public class Sender {
                         JSONObject jo = new JSONObject();
                         jo.put("fs", arr);
                         String fullUrl = disp.getUrl() + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
-                        HttpPost post = new HttpPost(fullUrl);
-                        post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
+//                        HttpPost post = new HttpPost(fullUrl);
+//                        post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                         Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
-                        String response = Tool.getData(HttpSigleton.getSenderInstance(fullUrl, keyStore).execute(post));
+                        String response = HttpClient.getInstance().post(fullUrl, disp.getCompanyId(), jo.toString());
                         Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
                         rjo = new JSONObject(response);
                     } catch (Exception e) {
