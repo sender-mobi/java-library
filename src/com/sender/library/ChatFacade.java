@@ -1135,6 +1135,7 @@ public class ChatFacade {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);
+            model.put("pkey", pkey);
             if (encrypted) model.put("encrypted", 1);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
             cc.send(new SenderRequest(URL_FORM, form2Send, localId, new SenderRequest.HttpDataListener() {
