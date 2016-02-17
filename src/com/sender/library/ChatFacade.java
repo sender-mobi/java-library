@@ -93,7 +93,7 @@ public class ChatFacade {
     public static final String CLASS_CALL_CLOSE = ".callClose.sender";
     public static final String CLASS_SEND_PROXY = ".proxySend.sender";
     public static final String CLASS_GET_PROXY = ".proxy.sender";
-
+    public static final String CLASS_CHAT_KEY_SET = ".keyChat.sender";
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
     public static final String AUTH_ACTION_BREAK = "break";
@@ -1086,6 +1086,35 @@ public class ChatFacade {
                 @Override
                 public void onError(Exception e) {
                     jrl.onError(e, "get_companies_cf " + model);
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Enable/disable encryption in group dialogs
+     * @param chatId Chat Id
+     * @param enable true if need to enable encryption, false if need to disable
+     * @param senderPubKey self public key
+     * @param keyPool JsonObject contains for each chat member userId as key and encrypted chat key as value
+     */
+    public void setGroupChatEncryption(String chatId, boolean enable, String senderPubKey, JSONObject keyPool) {
+        try {
+            final JSONObject model = new JSONObject();
+            model.put("chatId", chatId);
+            model.put("enabled", enable ? 1 : 0);
+            model.put("senderKey", senderPubKey);
+            model.put("keys", keyPool);
+            cc.sendSync("chat_key_set", model, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject jo) {}
+
+                @Override
+                public void onError(Exception e) {
+                    e.printStackTrace();
                 }
             });
 
