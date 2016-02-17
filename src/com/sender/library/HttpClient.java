@@ -69,17 +69,19 @@ public class HttpClient {
                 os.flush();
                 os.close();
             }
+            if (200 != conn.getResponseCode()) throw new IOException(conn.getResponseCode() + " " + conn.getResponseMessage());
             is = conn.getInputStream();
-            rez = read(is);
+            rez = read(is, "gzip".equals(conn.getContentEncoding()));
             is.close();
         } catch (IOException e) {
+//            e.printStackTrace();
             try {
                 if (conn != null) {
                     int respCode = conn.getResponseCode();
                     System.out.println("resp code " + respCode);
                     es = conn.getErrorStream();
-                    rez = read(es);
-                    es.close();
+                    rez = read(es, "gzip".equals(conn.getContentEncoding()));
+                    if (es != null) es.close();
                 }
             } catch(IOException ex) {
                 ex.printStackTrace();
@@ -88,11 +90,12 @@ public class HttpClient {
         return rez;
     }
 
-    private String read(InputStream is) throws IOException {
+    private String read(InputStream is, boolean isZip) throws IOException {
         if (is == null) return "";
         StringBuilder sb = new StringBuilder();
         BufferedReader reader;
-        reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(is)));
+        if (isZip) reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(is)));
+        else reader = new BufferedReader(new InputStreamReader(is));
         String s;
         while ((s = reader.readLine()) != null) sb.append(s);
         return sb.toString();

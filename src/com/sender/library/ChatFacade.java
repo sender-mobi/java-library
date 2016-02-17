@@ -1104,7 +1104,7 @@ public class ChatFacade {
         try {
             final JSONObject model = new JSONObject();
             model.put("userId", userId);
-            cc.sendSync("get_user_info", model, new SenderRequest.HttpDataListener() {
+            cc.sendSync("get_ct", model, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     jrl.onSuccess(jo);
@@ -1112,7 +1112,7 @@ public class ChatFacade {
 
                 @Override
                 public void onError(Exception e) {
-                    jrl.onError(e, "get_user_info " + model);
+                    jrl.onError(e, "get_ct " + model);
                 }
             });
 
