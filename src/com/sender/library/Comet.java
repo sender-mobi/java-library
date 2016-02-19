@@ -1,7 +1,5 @@
 package com.sender.library;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -65,8 +63,6 @@ public class Comet extends Thread {
                 if (isShort && close) jo.put("connection", "close");
                 jo.put("meta", new JSONObject());
                 String fullUrl = disp.getUrl() + "comet?udid=" + disp.getUDID() + "&token=" + disp.getToken();
-                HttpPost post = new HttpPost(fullUrl);
-                post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                 Log.v(ChatDispatcher.TAG, "========> " + fullUrl + " " + jo.toString() + " (" + id + ")");
                 boolean checkResp = true;
                 try {
@@ -78,7 +74,7 @@ public class Comet extends Thread {
 //                    }
 //                    disp.onConnected();
 //                    r = 0;
-                    String response = com.sender.library.HttpClient.getInstance().post(fullUrl, disp.getCompanyId(), jo.toString());//Tool.getData(rr);
+                    String response = new Http().post(fullUrl, disp.getCompanyId(), jo.toString());//Tool.getData(rr);
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     JSONObject rjo = new JSONObject(response);
                     if (ChatDispatcher.CODE_DUPLICATE_COMET.equalsIgnoreCase(rjo.optString("code"))) {

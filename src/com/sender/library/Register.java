@@ -1,8 +1,6 @@
 package com.sender.library;
 
 import android.os.Build;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
 import org.json.JSONObject;
 
 import java.security.KeyStore;
@@ -47,14 +45,12 @@ public class Register extends Thread{
             jo.put("devName", devModel);
             jo.put("clientVersion", clientVersion);
             jo.put("devOS", Tool.isAndroid() ? "android" : System.getProperty("os.name").toUpperCase().contains("MAC") ? "mac" : "linux");
-            jo.put("clientType", Tool.isAndroid() ? "android" : System.getProperty("os.name"));
+            jo.put("clientType", Tool.isAndroid() ? "android" : "desktop");
             jo.put("versionOS", Tool.isAndroid() ? Build.VERSION.RELEASE : System.getProperty("os.version"));
             jo.put("authToken", authToken);
             jo.put("companyId", disp.getCompanyId());
             Log.v(this.getClass().getSimpleName(), "======> " + reqUrl + " data: " + jo.toString() + "(" + key + ")");
-            HttpPost post = new HttpPost(reqUrl);
-            post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
-            String rResp = HttpClient.getInstance().post(reqUrl, disp.getCompanyId(), jo.toString());// Tool.getData(HttpSigleton.getSyncClient(reqUrl, keyStore, 10000).execute(post));
+            String rResp = new Http().post(reqUrl, disp.getCompanyId(), jo.toString());// Tool.getData(HttpSigleton.getSyncClient(reqUrl, keyStore, 10000).execute(post));
             Log.v(this.getClass().getSimpleName(), "<======= " + rResp + "(" + key + ")");
             JSONObject rjo = new JSONObject(rResp);
             if (!rjo.has("deviceKey")) {

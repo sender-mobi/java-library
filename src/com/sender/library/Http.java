@@ -11,20 +11,11 @@ import java.util.zip.GZIPInputStream;
  * Date: 15.02.16
  * Time: 14:01
  */
-public class HttpClient {
+public class Http {
 
-    private static HttpClient instance;
-    private InputStream is, es;
-    private OutputStream os;
-
-    private HttpClient() {
+    public Http() {
         System.setProperty("http.keepAlive", "true");
-        System.setProperty("http.maxConnections", "10");
-    }
-
-    public static HttpClient getInstance() {
-        if (instance == null) instance = new HttpClient();
-        return instance;
+        System.setProperty("http.maxConnections", "20");
     }
 
     public String postImg(String url, InputStream is) {
@@ -48,6 +39,7 @@ public class HttpClient {
             conn = (HttpsURLConnection) a.openConnection();
             if (data != null) {
                 conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
             } else {
                 conn.setRequestMethod("GET");
             }
@@ -58,9 +50,8 @@ public class HttpClient {
             if (xpHeader != null) {
                 conn.setRequestProperty("X-Platform", xpHeader);
             }
-            conn.connect();
             if (data != null) {
-                os = conn.getOutputStream();
+                OutputStream os = conn.getOutputStream();
                 byte[] buffer = new byte[512];
                 int len;
                 while ((len = data.read(buffer)) != -1) {
@@ -70,16 +61,16 @@ public class HttpClient {
                 os.close();
             }
             if (200 != conn.getResponseCode()) throw new IOException(conn.getResponseCode() + " " + conn.getResponseMessage());
-            is = conn.getInputStream();
+            InputStream is = conn.getInputStream();
             rez = read(is, "gzip".equals(conn.getContentEncoding()));
             is.close();
         } catch (IOException e) {
-//            e.printStackTrace();
+            e.printStackTrace();
             try {
                 if (conn != null) {
                     int respCode = conn.getResponseCode();
                     System.out.println("resp code " + respCode);
-                    es = conn.getErrorStream();
+                    InputStream es = conn.getErrorStream();
                     rez = read(es, "gzip".equals(conn.getContentEncoding()));
                     if (es != null) es.close();
                 }

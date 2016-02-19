@@ -59,13 +59,13 @@ public class Sender {
                     String rurl = disp.getUrl() + request.getRequestURL() + (request.getRequestURL().contains("?") ? "&" : "?") + "udid=" + disp.getUDID() + "&token=" + disp.getToken();
                     if (request.getData() != null && request.getData().available() > 0) {                        // -------------------- binary post
                         Log.v(this.getClass().getSimpleName(), "========> " + rurl + " with binary data " + " (" + request.getId() + ")");
-                        resp = HttpClient.getInstance().postImg(rurl, request.getData());
+                        resp = new Http().postImg(rurl, request.getData());
                     } else if (request.getPostData() != null) {             // -------------------- post
                         Log.v(ChatDispatcher.TAG, "========> (" + request.getId() + ") " + rurl + " " + request.getPostData());
-                        resp = HttpClient.getInstance().post(rurl, disp.getCompanyId(), request.getPostData().toString());
+                        resp = new Http().post(rurl, disp.getCompanyId(), request.getPostData().toString());
                     } else {                                                // -------------------- get
                         Log.v(this.getClass().getSimpleName(), "========> (" + request.getId() + ") " + rurl);
-                        resp = HttpClient.getInstance().get(rurl, disp.getCompanyId());
+                        resp = new Http().get(rurl, disp.getCompanyId());
                     }
                     Log.v(this.getClass().getSimpleName(), "<======= (" + request.getId() + ") " + resp);
                     JSONObject jo = new JSONObject(resp);
@@ -196,7 +196,7 @@ public class Sender {
 //                        HttpPost post = new HttpPost(fullUrl);
 //                        post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                         Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
-                        String response = HttpClient.getInstance().post(fullUrl, disp.getCompanyId(), jo.toString());
+                        String response = new Http().post(fullUrl, disp.getCompanyId(), jo.toString());
                         Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
                         rjo = new JSONObject(response);
                     } catch (Exception e) {

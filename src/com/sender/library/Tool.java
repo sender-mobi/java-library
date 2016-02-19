@@ -1,11 +1,5 @@
 package com.sender.library;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -35,17 +29,7 @@ public class Tool {
         return addr.equalsIgnoreCase(ia.getHostAddress());
     }
 
-    public static String getData(HttpResponse resp) throws IOException {
-        int status = resp.getStatusLine().getStatusCode();
-        if (HttpStatus.SC_OK == status) {
-            return EntityUtils.toString(resp.getEntity());
-        } else {
-            resp.getEntity().consumeContent();
-            throw new IOException("invalid status code " + status);
-        }
-    }
-
     public static boolean checkServer(String url) throws IOException {
-        return 200 == new DefaultHttpClient().execute(new HttpGet(url + "ping")).getStatusLine().getStatusCode();
+        return "ok".equalsIgnoreCase(new Http().get(url + "ping", null));
     }
 }
