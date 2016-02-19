@@ -1060,9 +1060,11 @@ public class ChatFacade {
      * @param compUserId id of called company
      * @param chatId     id of company chat
      */
-    public void callCompany(String chatId, String compUserId) {
+    public void callCompany(String chatId, String compUserId, String searchString) {
         try {
-            JSONObject jo = getForm2Send(new JSONObject(), ".contact." + compUserId, chatId);
+            JSONObject model = new JSONObject();
+            model.put("text", searchString);
+            JSONObject jo = getForm2Send(model, ".contact." + compUserId, chatId);
             cc.send(new SenderRequest(URL_FORM, jo));
         } catch (Exception e) {
             e.printStackTrace();
@@ -1155,7 +1157,7 @@ public class ChatFacade {
      *
      * @param text      message text
      * @param encrypted is message encrypted
-     * @param pkey public key (for encrypted message)
+     * @param pkey      public key (for encrypted message)
      * @param localId   user local id
      * @param chatId    message chat id
      * @param sml       connection listener
