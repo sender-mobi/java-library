@@ -26,6 +26,8 @@ public class ChatFacade {
     public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
     public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
+    public static final String CLASS_UPDATE_CHAT = ".updChat.sender";
+    public static final String CLASS_UPATE_CHATUS_INFO = ".oStatusInfo.sender";
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
     public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
@@ -1098,10 +1100,11 @@ public class ChatFacade {
 
     /**
      * Enable/disable encryption in group dialogs
-     * @param chatId Chat Id
-     * @param enable true if need to enable encryption, false if need to disable
+     *
+     * @param chatId       Chat Id
+     * @param enable       true if need to enable encryption, false if need to disable
      * @param senderPubKey self public key
-     * @param keyPool JsonObject contains for each chat member userId as key and encrypted chat key as value
+     * @param keyPool      JsonObject contains for each chat member userId as key and encrypted chat key as value
      */
     public void setGroupChatEncryption(String chatId, boolean enable, String senderPubKey, JSONObject keyPool) {
         try {
@@ -1112,7 +1115,8 @@ public class ChatFacade {
             model.put("keys", keyPool);
             cc.sendSync("chat_key_set", model, new SenderRequest.HttpDataListener() {
                 @Override
-                public void onResponse(JSONObject jo) {}
+                public void onResponse(JSONObject jo) {
+                }
 
                 @Override
                 public void onError(Exception e) {
