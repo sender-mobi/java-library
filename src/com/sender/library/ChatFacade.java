@@ -1495,15 +1495,13 @@ public class ChatFacade {
     /**
      * Check if users online
      *
-     * @param userIdS user ids
+     * @param userId user ids
      */
-    public void checkOnline(String[] userIdS) {
+    public void checkOnline(String userId) {
         try {
             JSONObject model = new JSONObject();
-            JSONArray arr = new JSONArray();
-            for (String s : userIdS) arr.put(s);
-            model.put("userId", arr);
-            JSONObject form2Send = getForm2Send(model, CLASS_CHECK_ONLINE, senderChatId);
+            model.put("userId", userId);
+            JSONObject form2Send = getForm2Send(model, CLASS_CHECK_ONLINE, "user+" + userId);
             cc.send(new SenderRequest(URL_FORM, form2Send));
         } catch (Exception e) {
             e.printStackTrace();
