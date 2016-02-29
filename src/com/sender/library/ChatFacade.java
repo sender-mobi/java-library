@@ -27,6 +27,7 @@ public class ChatFacade {
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
     public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
     public static final String CLASS_UPDATE_CHAT = ".updChat.sender";
+    public static final String CLASS_NTF_CHAT = ".ntfChat.sender";
     public static final String CLASS_UPATE_CHATUS_INFO = ".oStatusInfo.sender";
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
