@@ -66,7 +66,7 @@ public class ChatFacade {
     public static final String CLASS_SEND_MONITORING = ".monitoringData.sender";
     public static final String CLASS_SEND_UI_MONITORING = ".uiMonitoring.sender";
     public static final String CLASS_SEND_LOCALE = ".setDeviceLocale.sender";
-    public static final String CLASS_SHOP = ".worldOfTanks.sender";
+    public static final String CLASS_SHOP = ".shop.sender";
     public static final String CLASS_CHESS = ".chess.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
     public static final String CLASS_NOTIFICATION_ADD = ".addChatNotification.sender";
