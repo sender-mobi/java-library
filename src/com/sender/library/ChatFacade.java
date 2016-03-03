@@ -1494,6 +1494,24 @@ public class ChatFacade {
     }
 
     /**
+     * Send keyboard typing event
+     *
+     * @param chatId chat id
+     * @param text   msg text
+     */
+    public void sendTyping(String chatId, String text) {
+        try {
+            JSONObject rjo = new JSONObject();
+            rjo.put("chatId", chatId);
+            rjo.put("text", text);
+            rjo.put("sid", cc.getSid());
+            send("typing", rjo);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Check if users online
      *
      * @param userId user ids
