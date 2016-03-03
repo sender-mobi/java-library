@@ -1305,11 +1305,15 @@ public class ChatFacade {
      * @param chatId id of chat
      * @param jrl    connection listener
      */
-    public void getHistory(final String chatId, final JsonRespListener jrl) {
+    public void getHistory(final String chatId, String lastPacketId, final JsonRespListener jrl) {
         try {
             final JSONObject rjo = new JSONObject();
-            rjo.put("pos", 0);
-            rjo.put("size", 50);
+            if (lastPacketId != null && !lastPacketId.isEmpty())
+                rjo.put("id", lastPacketId);
+            else {
+                rjo.put("pos", 0);
+                rjo.put("size", 50);
+            }
             rjo.put("chatId", chatId);
             cc.sendSync("history", rjo, new SenderRequest.HttpDataListener() {
                 @Override
