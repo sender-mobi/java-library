@@ -1198,6 +1198,48 @@ public class ChatFacade {
     }
 
     /**
+     * Send user message
+     *
+     * @param text      message text
+     * @param packetId  message id
+     * @param encrypted is message encrypted
+     * @param pkey      public key (for encrypted message)
+     * @param localId   user local id
+     * @param chatId    message chat id
+     * @param sml       connection listener
+     */
+    public void editMessage(final String text, String packetId, boolean encrypted, final String pkey, final String localId, final String chatId, final SendMsgListener sml) {
+        try {
+            final JSONObject model = new JSONObject();
+            model.put("text", text);
+            model.put("pkey", pkey);
+            if (encrypted) model.put("encrypted", 1);
+            JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
+            form2Send.put("linkId", packetId);
+            cc.send(new SenderRequest(URL_FORM, form2Send, localId, new SenderRequest.HttpDataListener() {
+
+                @Override
+                public void onResponse(JSONObject jo) {
+                    try {
+                        String serverId = jo.optString("packetId");
+                        long time = jo.optLong("time");
+                        sml.onSuccess(serverId, time);
+                    } catch (Exception e) {
+                        sml.onError(e, model.toString());
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    sml.onError(e, model.toString());
+                }
+            }));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Make sip call
      *
      * @param userId user id
