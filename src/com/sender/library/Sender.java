@@ -37,6 +37,7 @@ public class Sender {
         try {
             if (ChatFacade.URL_FORM.equalsIgnoreCase(sr.getRequestURL()) && sr.getPostData() != null) {
                 packQueue.put(sr);
+                Log.v(ChatDispatcher.TAG, "added to queue: " + sr);
             } else {
                 sendSync(sr);
             }
@@ -44,9 +45,12 @@ public class Sender {
             e.printStackTrace();
         }
         if (!isRunning) {
+            Log.v(ChatDispatcher.TAG, "run sender...");
             isRunning = true;
             timer = new Timer();
             timer.schedule(new SendTask(), 0, 1000);
+        } else {
+            Log.v(ChatDispatcher.TAG, "sender is running...");
         }
     }
     
@@ -166,6 +170,7 @@ public class Sender {
     private class SendTask extends TimerTask {
         @Override
         public void run() {
+//            Log.v(ChatDispatcher.TAG, "step sender begin... Queue size: " + packQueue.size());
             try {
                 JSONArray arr = new JSONArray();
                 List<SenderRequest> toSend = new ArrayList<SenderRequest>();
@@ -193,8 +198,6 @@ public class Sender {
                         JSONObject jo = new JSONObject();
                         jo.put("fs", arr);
                         String fullUrl = disp.getUrl() + "send?udid=" + disp.getUDID() + "&token=" + disp.getToken();
-//                        HttpPost post = new HttpPost(fullUrl);
-//                        post.setEntity(new ByteArrayEntity(jo.toString().getBytes()));
                         Log.v(ChatDispatcher.TAG, "========> (" + id + ") " + fullUrl + " "  + jo.toString());
                         String response = new Http().post(fullUrl, disp.getCompanyId(), jo.toString());
                         Log.v(ChatDispatcher.TAG, "<======== ("  + id + ") " + response);
@@ -226,6 +229,7 @@ public class Sender {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+//            Log.v(ChatDispatcher.TAG, "step sender end");
         }
     }
 

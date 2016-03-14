@@ -84,4 +84,14 @@ public class SenderRequest {
         public void onResponse(JSONObject data);
         public void onError(Exception e);
     }
+
+    @Override
+    public String toString() {
+        return "SenderRequest{" +
+                "requestURL='" + requestURL + '\'' +
+                ", postData=" + postData +
+                ", data=" + data +
+                ", id='" + id + '\'' +
+                '}';
+    }
 }
