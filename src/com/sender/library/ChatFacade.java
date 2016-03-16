@@ -2281,7 +2281,7 @@ public class ChatFacade {
         void onDisconnected();
     }
 
-    private interface EditMsgListener {
+    public interface EditMsgListener {
         void onSuccess(JSONObject jo);
 
         void onError(Exception error);
