@@ -1208,7 +1208,7 @@ public class ChatFacade {
      * @param chatId    message chat id
      * @param sml       connection listener
      */
-    public void editMessage(final String text, String packetId, boolean encrypted, final String pkey, final String localId, final String chatId, final SendMsgListener sml) {
+    public void editMessage(final String text, String packetId, boolean encrypted, final String pkey, final String localId, final String chatId, final EditMsgListener eml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);
@@ -1220,21 +1220,16 @@ public class ChatFacade {
 
                 @Override
                 public void onResponse(JSONObject jo) {
-                    try {
-                        String serverId = jo.optString("packetId");
-                        long time = jo.optLong("time");
-                        sml.onSuccess(serverId, time);
-                    } catch (Exception e) {
-                        sml.onError(e, model.toString());
-                    }
+                    eml.onSuccess(jo);
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    sml.onError(e, model.toString());
+                    eml.onError(e);
                 }
             }));
         } catch (Exception e) {
+            eml.onError(e);
             e.printStackTrace();
         }
     }
@@ -2286,4 +2281,9 @@ public class ChatFacade {
         void onDisconnected();
     }
 
+    private interface EditMsgListener {
+        void onSuccess(JSONObject jo);
+
+        void onError(Exception error);
+    }
 }
