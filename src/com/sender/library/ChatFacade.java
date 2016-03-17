@@ -1417,7 +1417,7 @@ public class ChatFacade {
      */
     public void setChatProfile(InputStream icon, final String type, final String name, final String desc, final String chatId, final UploadFileListener ufl) {
         if (icon != null) {
-            uploadFile(icon, type, new UploadFileListener() {
+            uploadFile(icon, type, "chat_logo", new UploadFileListener() {
 
                 @Override
                 public void onSuccess(final String url) {
@@ -1865,7 +1865,7 @@ public class ChatFacade {
             final String ffname = fname;
             final String extPart = fname.contains(".") ? fname.substring(fname.lastIndexOf(".") + 1) : "zip";
             if (preview != null) {
-                uploadFile(new ByteArrayInputStream(preview), "png", new UploadFileListener() {
+                uploadFile(new ByteArrayInputStream(preview), "png", "upload", new UploadFileListener() {
                     @Override
                     public void onSuccess(final String previewUrl) {
                         if (lat != null && lon != null) {
@@ -1881,7 +1881,7 @@ public class ChatFacade {
                                 }
                             });
                         } else {
-                            uploadFile(file, extPart, new UploadFileListener() {
+                            uploadFile(file, extPart, "upload", new UploadFileListener() {
                                 @Override
                                 public void onSuccess(final String url) {
                                     try {
@@ -1905,7 +1905,7 @@ public class ChatFacade {
                     }
                 });
             } else {
-                uploadFile(file, extPart, new UploadFileListener() {
+                uploadFile(file, extPart, "upload", new UploadFileListener() {
                     @Override
                     public void onSuccess(final String url) {
                         if (lat != null && lon != null) {
@@ -1955,9 +1955,9 @@ public class ChatFacade {
      * @param type type of file
      * @param ufl  connection uploading listener
      */
-    public void uploadFile(final InputStream file, final String type, final UploadFileListener ufl) {
+    public void uploadFile(final InputStream file, final String type, final String target, final UploadFileListener ufl) {
         try {
-            final String req = "upload?filetype=" + type + "&sid=" + cc.getSid();
+            final String req = "upload?filetype=" + type + "&target=" + target + "&sid=" + cc.getSid();
             cc.send(new SenderRequest(req,
                     file,
                     new SenderRequest.HttpDataListener() {
@@ -2061,7 +2061,7 @@ public class ChatFacade {
             final SetSelfListener ufl) {
         try {
             if (icon != null && icon.available() > 0) {
-                uploadFile(icon, type, new UploadFileListener() {
+                uploadFile(icon, type, "user_logo", new UploadFileListener() {
 
                     @Override
                     public void onSuccess(String url) {
