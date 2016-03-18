@@ -1107,7 +1107,7 @@ public class ChatFacade {
      * @param senderPubKey self public key
      * @param keyPool      JsonObject contains for each chat member userId as key and encrypted chat key as value
      */
-    public void setGroupChatEncryption(String chatId, boolean enable, String senderPubKey, JSONObject keyPool) {
+    public void setGroupChatEncryption(String chatId, boolean enable, String senderPubKey, JSONObject keyPool, final EncryptionListener el) {
         try {
             final JSONObject model = new JSONObject();
             model.put("chatId", chatId);
@@ -1117,10 +1117,12 @@ public class ChatFacade {
             cc.sendSync("chat_key_set", model, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
+                    el.onSuccess(jo);
                 }
 
                 @Override
                 public void onError(Exception e) {
+                    el.onError(e);
                     e.printStackTrace();
                 }
             });
@@ -2279,6 +2281,12 @@ public class ChatFacade {
          * Will be called when connection to server lost
          */
         void onDisconnected();
+    }
+
+    public interface EncryptionListener {
+        void onSuccess(JSONObject jo);
+
+        void onError(Exception error);
     }
 
     public interface EditMsgListener {
