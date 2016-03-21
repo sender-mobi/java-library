@@ -74,7 +74,7 @@ public class Comet extends Thread {
 //                    }
 //                    disp.onConnected();
 //                    r = 0;
-                    String response = new Http().post(fullUrl, disp.getCompanyId(), jo.toString());//Tool.getData(rr);
+                    String response = new Http().post(fullUrl, disp.getCompanyId(), jo.toString(), true);//Tool.getData(rr);
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     JSONObject rjo = new JSONObject(response);
                     if (ChatDispatcher.CODE_DUPLICATE_COMET.equalsIgnoreCase(rjo.optString("code"))) {

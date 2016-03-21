@@ -19,27 +19,36 @@ public class Http {
     }
 
     public String postImg(String url, InputStream is) {
-        return request(url, "image/png", null, is);
+        return request(url, "image/png", null, is, false);
     }
 
     public String post(String url, String xpHeader, String s) {
+        return post(url, xpHeader, s, false);
+    }
+
+    public String post(String url, String xpHeader, String s, boolean isComet) {
         ByteArrayInputStream data = new ByteArrayInputStream(s.getBytes());
-        return request(url, null, xpHeader, data);
+        return request(url, null, xpHeader, data, isComet);
     }
 
     public String get(String url, String xpHeader) {
-        return request(url, null, xpHeader, null);
+        return request(url, null, xpHeader, null, false);
     }
 
-    public String request(String url, String conntype, String xpHeader, InputStream data) {
+    public String request(String url, String conntype, String xpHeader, InputStream data, boolean isComet) {
         String rez = null;
         HttpsURLConnection conn = null;
+
         try {
             URL a = new URL(url);
             conn = (HttpsURLConnection) a.openConnection();
+            conn.setDoInput(true);
+            conn.setConnectTimeout(1000);
+            conn.setReadTimeout(isComet ? 50000 : 10000);
             if (data != null) {
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
+                conn.setChunkedStreamingMode(0);
             } else {
                 conn.setRequestMethod("GET");
             }
@@ -50,7 +59,9 @@ public class Http {
             if (xpHeader != null) {
                 conn.setRequestProperty("X-Platform", xpHeader);
             }
+//            Log.v(ChatDispatcher.TAG, "~~~ make connection with timeouts: " + conn.getConnectTimeout() + " | " + conn.getReadTimeout());
             if (data != null) {
+//                Log.v(ChatDispatcher.TAG, "~~~ try to send post data: " + data.available());
                 OutputStream os = conn.getOutputStream();
                 byte[] buffer = new byte[512];
                 int len;
@@ -59,17 +70,22 @@ public class Http {
                 }
                 os.flush();
                 os.close();
+//                Log.v(ChatDispatcher.TAG, "~~~ sent!");
             }
-            if (200 != conn.getResponseCode()) throw new IOException(conn.getResponseCode() + " " + conn.getResponseMessage());
+//            if (200 != conn.getResponseCode()) throw new IOException(conn.getResponseCode() + " " + conn.getResponseMessage());
+//            Log.v(ChatDispatcher.TAG, "~~~ resp code: 200");
             InputStream is = conn.getInputStream();
+//            Log.v(ChatDispatcher.TAG, "~~~ try to read " + is.available());
             rez = read(is, "gzip".equals(conn.getContentEncoding()));
             is.close();
+//            Log.v(ChatDispatcher.TAG, "~~~ received");
         } catch (IOException e) {
+//            Log.v(ChatDispatcher.TAG, "~~~ " + e.getMessage());
             e.printStackTrace();
             try {
                 if (conn != null) {
                     int respCode = conn.getResponseCode();
-                    System.out.println("resp code " + respCode);
+                    Log.v(ChatDispatcher.TAG, "resp code " + respCode);
                     InputStream es = conn.getErrorStream();
                     rez = read(es, "gzip".equals(conn.getContentEncoding()));
                     if (es != null) es.close();
@@ -77,6 +93,11 @@ public class Http {
             } catch(IOException ex) {
                 ex.printStackTrace();
             }
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+            Log.v(ChatDispatcher.TAG, "~~~ end!");
         }
         return rez;
     }
