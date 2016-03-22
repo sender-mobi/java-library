@@ -97,7 +97,7 @@ public class Http {
             if (conn != null) {
                 conn.disconnect();
             }
-            Log.v(ChatDispatcher.TAG, "~~~ end!");
+//            Log.v(ChatDispatcher.TAG, "~~~ end!");
         }
         return rez;
     }
