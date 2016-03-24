@@ -102,6 +102,7 @@ public class ChatFacade {
     public static final String AUTH_ACTION_BREAK = "break";
     public static final String AUTH_ACTION_IVR = "ivr";
     public static final String AUTH_ACTION_LIGHT_IVR = "light_ivr";
+    public static final String AUTH_STEP_LIGHT_IVR = "light_ivr";
 
     public static final String AUTH_STEP_PHONE = "phone";
     public static final String AUTH_STEP_OTP = "otp";
@@ -1383,7 +1384,7 @@ public class ChatFacade {
         try {
             final JSONObject model = new JSONObject();
             final String url;
-            if (AUTH_ACTION_PHONE.equalsIgnoreCase(action)) {
+            if (AUTH_ACTION_PHONE.equalsIgnoreCase(action) || AUTH_ACTION_LIGHT_IVR.equalsIgnoreCase(action)) {
                 model.put("phone", value);
             } else if (AUTH_ACTION_OTP.equalsIgnoreCase(action)) {
                 model.put("otp", value);
