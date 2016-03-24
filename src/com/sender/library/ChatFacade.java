@@ -101,6 +101,7 @@ public class ChatFacade {
     public static final String AUTH_ACTION_OTP = "otp";
     public static final String AUTH_ACTION_BREAK = "break";
     public static final String AUTH_ACTION_IVR = "ivr";
+    public static final String AUTH_ACTION_LIGHT_IVR = "light_ivr";
 
     public static final String AUTH_STEP_PHONE = "phone";
     public static final String AUTH_STEP_OTP = "otp";
@@ -1386,6 +1387,8 @@ public class ChatFacade {
                 model.put("phone", value);
             } else if (AUTH_ACTION_OTP.equalsIgnoreCase(action)) {
                 model.put("otp", value);
+            } else if (AUTH_ACTION_BREAK.equalsIgnoreCase(action) && value != null) {
+                model.put("step", value);
             }
             cc.sendSync("auth_" + action, model, new SenderRequest.HttpDataListener() {
                 @Override
@@ -1394,7 +1397,8 @@ public class ChatFacade {
                             jo.optString("step")
                             , jo.optString("procId")
                             , jo.optString("devName")
-                            , jo.optString("error"));
+                            , jo.optString("error")
+                            , jo);
                 }
 
                 @Override
@@ -2171,7 +2175,7 @@ public class ChatFacade {
      * Uploading and connection response  listener
      */
     public interface AuthListener extends RespListener {
-        void onSuccess(String step, String procId, String desc, String errMsg);
+        void onSuccess(String step, String procId, String desc, String errMsg, JSONObject jo);
     }
 
     /**
