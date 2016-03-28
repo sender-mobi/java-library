@@ -83,14 +83,17 @@ public class Comet extends Thread {
                         return;
                     }
                     checkResp = disp.checkResp(rjo, null, null);
+                    Log.v(ChatDispatcher.TAG, "checkResp: " + checkResp + ", " + id);
                     if (checkResp) {
                         if (rjo.has("bi")) {
                             lastSrvBatchId = rjo.optString("bi");
                         }
                         if (rjo.has("fs")) {
                             JSONArray fs = rjo.optJSONArray("fs");
+                            Log.v(ChatDispatcher.TAG, "(" + id + ") fs != null: " + (fs != null) + ", fs size: " + (fs != null ? fs.length() : 0));
                             for (int i = 0; i < fs.length(); i++) {
                                 JSONObject fsj = fs.optJSONObject(i);
+                                Log.v(ChatDispatcher.TAG, "(" + id + ") onMessage: " + fsj);
                                 disp.onMessage(fsj);
                             }
                             if (!isShort) sleep(500);
