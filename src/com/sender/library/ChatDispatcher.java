@@ -25,7 +25,6 @@ public class ChatDispatcher {
     private ChatFacade.SenderListener sml;
     public static final String senderChatId = "sender";
     public static ChatDispatcher instanse;
-    private KeyStore keyStore;
     public static final String TAG = "ChatDispatcher";
     private String devModel, devType, clientVersion, authToken, companyId;
     private String developerKey;
@@ -55,7 +54,6 @@ public class ChatDispatcher {
         this.developerKey = developerKey;
         this.devModel = devModel;
         this.devType = devType;
-        this.keyStore = keyStore;
         this.clientVersion = clientVersion;
         this.authToken = authToken;
         this.companyId = companyId;
@@ -97,18 +95,20 @@ public class ChatDispatcher {
     }
 
     public String getUrl(boolean full) {
-        return "https://" + ChatFacade.getUrl() + "/" + (full ? protocolVersion + "/" : "");
+        String url = "https://" + ChatFacade.getUrl() + "/" + (full ? protocolVersion + "/" : "");
+        Log.v(TAG, url);
+        return url;
     }
 
     public void end() {
         setCometId(null);
         comet.disconnect();
-        Sender.getInstance(this, keyStore).stop();
+        Sender.getInstance(this).stop();
         onDisconnected();
     }
     
     public void send(SenderRequest request) {
-        Sender.getInstance(this, keyStore).send(request);
+        Sender.getInstance(this).send(request);
         startComet();
     }
 
@@ -148,7 +148,7 @@ public class ChatDispatcher {
             regProcess = true;
         }
         masterKey = ChatFacade.SID_UNDEF;
-        new Register(this, developerId, UDID, devModel, devType, clientVersion, authToken, keyStore).start();
+        new Register(this, developerId, UDID, devModel, devType, clientVersion, authToken).start();
     }
 
     public void onNeedUpdate() {
@@ -173,7 +173,7 @@ public class ChatDispatcher {
     public void onDisconnected() {
         Log.v(TAG, "onDisconnected");
         connStateOk = false;
-        Sender.getInstance(this, keyStore).stop();
+        Sender.getInstance(this).stop();
         sml.onDisconnected();
     }
 
@@ -242,7 +242,7 @@ public class ChatDispatcher {
     public void startComet(boolean isShort) {
         if (getCometId() == null) {
             Log.v(TAG, "comet not running! Started...");
-            comet = new Comet(this, keyStore, isShort);
+            comet = new Comet(this, isShort);
             setCometId(comet.getCometId());
             comet.start();
         } else {

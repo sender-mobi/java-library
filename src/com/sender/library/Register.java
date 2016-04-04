@@ -3,7 +3,6 @@ package com.sender.library;
 import android.os.Build;
 import org.json.JSONObject;
 
-import java.security.KeyStore;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -16,10 +15,9 @@ import java.util.UUID;
 public class Register extends Thread{
 
     private ChatDispatcher disp;
-    private KeyStore keyStore;
     private String UDID, devModel, devType, clientVersion, authToken, developerId;
 
-    public Register(ChatDispatcher disp, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken, KeyStore keyStore) {
+    public Register(ChatDispatcher disp, String developerId, String UDID, String devModel, String devType, String clientVersion, String authToken) {
         super("Register");
         this.disp = disp;
         this.developerId = developerId;
@@ -28,7 +26,6 @@ public class Register extends Thread{
         this.devType = devType;
         this.clientVersion = clientVersion;
         this.authToken = authToken;
-        this.keyStore = keyStore;
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.sender.library;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.security.KeyStore;
 import java.util.UUID;
 
 /**
@@ -16,13 +15,11 @@ public class Comet extends Thread {
 
     private ChatDispatcher disp;
     private String lastSrvBatchId;
-    private KeyStore keyStore;
     public static int MAX_RETRY = 3;
     private boolean isShort = false;
     private String id = UUID.randomUUID().toString().replace("-", "");
 
-    public Comet(ChatDispatcher disp, KeyStore keyStore, boolean isShort) {
-        this.keyStore = keyStore;
+    public Comet(ChatDispatcher disp, boolean isShort) {
         this.disp = disp;
         this.isShort = isShort;
     }

@@ -3,7 +3,6 @@ package com.sender.library;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.security.KeyStore;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -18,18 +17,16 @@ public class Sender {
 
     private BlockingQueue<SenderRequest> packQueue = new ArrayBlockingQueue<SenderRequest>(20);
     private ChatDispatcher disp;
-    private KeyStore keyStore;
     private Timer timer;
     private boolean isRunning = false;
     private static Sender instance;
 
-    private Sender(ChatDispatcher disp, KeyStore keyStore) {
+    private Sender(ChatDispatcher disp) {
         this.disp = disp;
-        this.keyStore = keyStore;
     }
 
-    public static Sender getInstance(ChatDispatcher disp, KeyStore keyStore) {
-        if (instance == null) instance = new Sender(disp, keyStore);
+    public static Sender getInstance(ChatDispatcher disp) {
+        if (instance == null) instance = new Sender(disp);
         return instance;
     }
 

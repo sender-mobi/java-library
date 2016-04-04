@@ -36,9 +36,10 @@ public class Http {
     }
 
     public String request(String url, String conntype, String xpHeader, InputStream data, boolean isComet) {
+
         String rez = null;
         HttpsURLConnection conn = null;
-
+//        Log.v(ChatDispatcher.TAG, "~~~ try to make connection to: " + url);
         try {
             URL a = new URL(url);
             conn = (HttpsURLConnection) a.openConnection();
