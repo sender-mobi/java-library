@@ -740,7 +740,10 @@ public class ChatFacade {
      */
     public void syncDialogs(final JsonRespListener scl) {
         try {
-            cc.sendSync("sync_dlg", new JSONObject(), new SenderRequest.HttpDataListener() {
+            JSONObject jo = new JSONObject();
+            jo.put("p2p", true);
+            jo.put("message", true);
+            cc.sendSync("sync_dlg", jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     scl.onSuccess(jo);
@@ -1210,7 +1213,7 @@ public class ChatFacade {
      * @param pkey      public key (for encrypted message)
      * @param localId   user local id
      * @param chatId    message chat id
-     * @param sml       connection listener
+     * @param eml       connection listener
      */
     public void editMessage(final String text, String packetId, boolean encrypted, final String pkey, final String localId, final String chatId, final EditMsgListener eml) {
         try {
