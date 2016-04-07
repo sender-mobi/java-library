@@ -125,7 +125,7 @@ public class ChatFacade {
     private static final String CLASS_STATUS_SET = ".oStatusSet.sender";
     private static final String STATUS_ONLINE = "online";
     private static final String STATUS_OFFLINE = "offline";
-
+    public static final String TARGET_UPLOAD = "upload";
     private static String currUrl;
 
     private ChatDispatcher cc;
