@@ -1173,14 +1173,17 @@ public class ChatFacade {
      * @param localId   user local id
      * @param chatId    message chat id
      * @param sml       connection listener
+     * @param toOper    in oper chats msg visible only for operators
      */
-    public void sendMessage(final String text, boolean encrypted, final String pkey, final String localId, final String chatId, final SendMsgListener sml) {
+    public void sendMessage(final String text, boolean toOper, boolean encrypted, final String pkey, final String localId, final String chatId, final SendMsgListener sml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);
             model.put("pkey", pkey);
             if (encrypted) model.put("encrypted", 1);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
+            if (toOper)
+                form2Send.put("toOper", true);
             cc.send(new SenderRequest(URL_FORM, form2Send, localId, new SenderRequest.HttpDataListener() {
 
                 @Override
