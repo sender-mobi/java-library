@@ -429,6 +429,10 @@ public class ChatFacade {
         });
     }
 
+    public void syncSend(String url, JSONObject data, SenderRequest.HttpDataListener listener) {
+        cc.sendSync(url, data, listener);
+    }
+
     /**
      * Get SIP login by UserId
      *
