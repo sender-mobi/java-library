@@ -126,6 +126,7 @@ public class ChatFacade {
     private static final String STATUS_ONLINE = "online";
     private static final String STATUS_OFFLINE = "offline";
     public static final String TARGET_UPLOAD = "upload";
+    private static final String CHAT_ID_USER_SENDER = "user+sender";
     private static String currUrl;
 
     private ChatDispatcher cc;
@@ -1165,6 +1166,28 @@ public class ChatFacade {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void getCompanyThemes(String companyId, final ResponseListener respListener) {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("companyId", companyId);
+            data.put("chatId", CHAT_ID_USER_SENDER);
+            cc.sendSync("get_themes", data, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject data) {
+                    respListener.onSuccess(data);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    respListener.onError(e);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            respListener.onError(e);
         }
     }
 
@@ -2237,6 +2260,12 @@ public class ChatFacade {
      */
     public interface RespListener {
         void onError(Exception e, String req);
+    }
+
+    public interface ResponseListener {
+        void onError(Exception e);
+
+        void onSuccess(JSONObject jo);
     }
 
     /**
