@@ -1169,7 +1169,7 @@ public class ChatFacade {
         }
     }
 
-    public void getCompanyThemes(String companyId, final ResponseListener respListener) {
+    public void getCompanyThemes(String companyId, final JsonRespListener respListener) {
         try {
             JSONObject data = new JSONObject();
             data.put("companyId", companyId);
@@ -1182,12 +1182,12 @@ public class ChatFacade {
 
                 @Override
                 public void onError(Exception e) {
-                    respListener.onError(e);
+                    respListener.onError(e, null);
                 }
             });
         } catch (Exception e) {
             e.printStackTrace();
-            respListener.onError(e);
+            respListener.onError(e, null);
         }
     }
 
@@ -2260,12 +2260,6 @@ public class ChatFacade {
      */
     public interface RespListener {
         void onError(Exception e, String req);
-    }
-
-    public interface ResponseListener {
-        void onError(Exception e);
-
-        void onSuccess(JSONObject jo);
     }
 
     /**
