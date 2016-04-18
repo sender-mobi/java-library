@@ -434,6 +434,67 @@ public class ChatFacade {
         cc.sendSync(url, data, listener);
     }
 
+    public void btcBalance(String xPub, final JsonRespListener l) {
+        final JSONObject jo = new JSONObject();
+        try {
+            jo.put("addr", xPub);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        cc.sendSync("blockchain_balance", jo, new SenderRequest.HttpDataListener() {
+            @Override
+            public void onResponse(JSONObject jo) {
+                l.onSuccess(jo);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                l.onError(e, "blockchain_balance : " + jo.toString());
+            }
+        });
+    }
+
+    public void btcOutputs(String xPub, final JsonRespListener l) {
+        final JSONObject jo = new JSONObject();
+        try {
+            jo.put("addr", xPub);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        cc.sendSync("blockchain_outputs", jo, new SenderRequest.HttpDataListener() {
+            @Override
+            public void onResponse(JSONObject jo) {
+                l.onSuccess(jo);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                l.onError(e, "blockchain_outputs : " + jo.toString());
+            }
+        });
+    }
+
+    public void btcPublishTx(String b58tx, final JsonRespListener l) {
+        final JSONObject jo = new JSONObject();
+        try {
+            jo.put("tx", b58tx);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        cc.sendSync("blockchain_pay", jo, new SenderRequest.HttpDataListener() {
+            @Override
+            public void onResponse(JSONObject jo) {
+                l.onSuccess(jo);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                l.onError(e, "blockchain_pay : " + jo.toString());
+            }
+        });
+    }
+
+
     /**
      * Get SIP login by UserId
      *
