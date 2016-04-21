@@ -1563,6 +1563,28 @@ public class ChatFacade {
 
     }
 
+    public void getCompanySnippets(String companyId, final JsonRespListener respListener) {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("companyId", companyId);
+            data.put("chatId", CHAT_ID_USER_SENDER);
+            cc.sendSync("get_snippets", data, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject data) {
+                    respListener.onSuccess(data);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    respListener.onError(e, null);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            respListener.onError(e, null);
+        }
+    }
+
     /**
      * Send message read
      *
