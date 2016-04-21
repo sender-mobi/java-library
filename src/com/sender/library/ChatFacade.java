@@ -1306,11 +1306,13 @@ public class ChatFacade {
      * @param chatId    message chat id
      * @param eml       connection listener
      */
-    public void editMessage(final String text, String packetId, boolean encrypted, final String pkey, final String localId, final String chatId, final EditMsgListener eml) {
+    public void editMessage(final String text, String packetId, boolean toOper, boolean encrypted, final String pkey, final String localId, final String chatId, final EditMsgListener eml) {
         try {
             final JSONObject model = new JSONObject();
             model.put("text", text);
             model.put("pkey", pkey);
+            if (toOper)
+                model.put("toOper", toOper);
             if (encrypted) model.put("encrypted", 1);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
             form2Send.put("linkId", packetId);
