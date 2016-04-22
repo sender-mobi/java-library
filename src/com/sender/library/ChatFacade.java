@@ -1313,11 +1313,11 @@ public class ChatFacade {
             final JSONObject model = new JSONObject();
             model.put("text", text);
             model.put("pkey", pkey);
-            if (toOper)
-                model.put("toOper", toOper);
             if (encrypted) model.put("encrypted", 1);
             JSONObject form2Send = getForm2Send(model, CLASS_TEXT_ROUTE, chatId);
             form2Send.put("linkId", packetId);
+            if (toOper)
+                form2Send.put("toOper", toOper);
             cc.send(new SenderRequest(URL_FORM, form2Send, localId, new SenderRequest.HttpDataListener() {
 
                 @Override
