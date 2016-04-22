@@ -26,6 +26,9 @@ public class ChatFacade {
     public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
     public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
     public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
+    public static final String CLASS_NTF_THEME = ".ntfTheme.sender";
+    public static final String CLASS_FORCE_OPEN = ".forceOpen.sender";
+    public static final String CLASS_UPDATE_STORAGE = ".updateStorage.sender";
     public static final String CLASS_UPDATE_CHAT = ".updChat.sender";
     public static final String CLASS_NTF_CHAT = ".ntfChat.sender";
     public static final String CLASS_UPATE_CHATUS_INFO = ".oStatusInfo.sender";
@@ -86,7 +89,6 @@ public class ChatFacade {
     public static final String CLASS_AUTH = ".authNative.sender";
     public static final String CLASS_GAME_WINNIE = ".winnieThePoohHoney.sender";
     public static final String CLASS_VIBRO = ".vibro.sender";
-    public static final String CLASS_UPDATE_STORAGE = ".updateStorage.sender";
     public static final String CLASS_IP = ".ip.sender";
     public static final String CLASS_START_SYNC = ".startSyncCt.sender";
     public static final String CLASS_FULL_VERSION = ".fullVersion.sender";
