@@ -1630,7 +1630,7 @@ public class ChatFacade {
         try {
             final JSONObject jo = new JSONObject();
             jo.put("chatId", chatId);
-            cc.sendSync("chat_info", jo, new SenderRequest.HttpDataListener() {
+            cc.sendSync("chat_get", jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
                     cil.onSuccess(jo);
