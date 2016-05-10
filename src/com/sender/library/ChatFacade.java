@@ -42,6 +42,7 @@ public class ChatFacade {
     public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
     public static final String CLASS_SYNC_CONTACT = ".contactSync.sender";
     public static final String CLASS_SET_CT = ".setCt.sender";
+    public static final String CLASS_CONTACT_SET = ".contactSet.sender";
     public static final String CLASS_UPDATE_CT = ".updateCt.sender";
     public static final String CLASS_GET_SELF_INFO = ".getSelfInfo.sender";
     public static final String CLASS_SET_SELF_INFO = ".setSelfInfo.sender";
