@@ -732,7 +732,7 @@ public class ChatFacade {
         try {
             final JSONObject jo = new JSONObject();
             jo.put("cts", users);
-            jo.put("apiVersion", 1);
+            //jo.put("apiVersion", 1);
             cc.sendSync("sync_ct", jo, new SenderRequest.HttpDataListener() {
                 @Override
                 public void onResponse(JSONObject jo) {
