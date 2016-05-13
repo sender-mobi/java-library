@@ -350,14 +350,23 @@ public class ChatFacade {
      * @param compId company Id
      * @param online status
      */
-    public void setCompanyStatus(String compId, boolean online) {
+    public void setCompanyStatus(String compId, boolean online, final JsonRespListener listener) {
         try {
             JSONObject model = new JSONObject();
             model.put("companyId", compId);
             model.put("status", online ? STATUS_ONLINE : STATUS_OFFLINE);
             JSONObject form2Send = getForm2Send(model, CLASS_STATUS_SET, userSender);
-            cc.send(new SenderRequest(URL_FORM,
-                    form2Send));
+            cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject data) {
+                    listener.onSuccess(data);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    listener.onError(e, e.getMessage());
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
