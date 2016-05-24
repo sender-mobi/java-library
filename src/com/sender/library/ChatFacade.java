@@ -118,6 +118,7 @@ public class ChatFacade {
     public static final String URL_PROD = "api.sender.mobi";
     public static final String URL_PROD_COM = "senderapi.com";
     public static final String URL_PROD_WWW = "www.senderapi.com";
+    public static final String URL_ALPHA = "api-alpha.sender.mobi";
 
     public static final CopyOnWriteArrayList<IP> IP_POOL = new CopyOnWriteArrayList<IP>();
 
