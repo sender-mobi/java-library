@@ -1,5 +1,6 @@
 package com.sender.library;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.crypto.Mac;
@@ -155,9 +156,12 @@ public class ChatDispatcher {
         sml.onNeedUpdate();
     }
 
+    public void onChatMessages(JSONArray arr, String chatId, int unread, boolean more) {
+        sml.onChatData(arr, chatId, unread, more);
+    }
 
-    public void onMessage(JSONObject jo) {
-        sml.onData(jo);
+    public void onSysMessages(JSONArray arr) {
+        sml.onSysData(arr);
     }
 
     public void onConnected() {

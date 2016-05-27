@@ -196,62 +196,7 @@ public class ChatFacade {
      */
     public ChatFacade(String url, String developerId, String developerKey, String sid, String imei, String devModel, String devType, String clientVersion, int protocolVersoin, String authToken, String companyId, KeyStore keystore, boolean isShort, final SenderListener listener) throws Exception {
         currUrl = url;
-        this.cc = ChatDispatcher.getInstanse(developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, new SenderListener() {
-            @Override
-            public void onData(JSONObject jo) {
-                try {
-                    String formClass = (jo.has("formId") ? jo.optString("formId") : "") + "." + jo.optString("robotId") + "." + jo.optString("companyId");
-                    if (jo.has("robotId") && jo.has("companyId")) {
-                        jo.put("class", formClass);
-                    }
-                    if (formClass.equalsIgnoreCase(ChatFacade.CLASS_IP)) {
-//                        IP_POOL.clear();
-//                        JSONObject model = jo.optJSONObject("model");
-//                        Iterator keys = model.keys();
-//                        while (keys.hasNext()) {
-//                            String ip = model.optString(keys.next().toString());
-//                            if (ip != null && ip.length() > 6) {
-//                                IP_POOL.add(new IP(ip));
-//                            }
-//                        }
-                        return;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                listener.onData(jo);
-            }
-
-            @Override
-            public void onReg(String masterKey, String UDID, boolean fullVer) {
-                listener.onReg(masterKey, UDID, fullVer);
-            }
-
-            @Override
-            public void onNeedUpdate() {
-                listener.onNeedUpdate();
-            }
-
-            @Override
-            public void onToken(String token) {
-                listener.onToken(token);
-            }
-
-            @Override
-            public void onRegError(Exception e) {
-                listener.onRegError(e);
-            }
-
-            @Override
-            public void onConnected() {
-                listener.onConnected();
-            }
-
-            @Override
-            public void onDisconnected() {
-                listener.onDisconnected();
-            }
-        });
+        this.cc = ChatDispatcher.getInstanse(developerId, developerKey, sid, imei, devModel, devType, clientVersion, protocolVersoin, authToken, companyId, keystore, listener);
         this.cc.startComet(isShort);
     }
 
@@ -2375,11 +2320,18 @@ public class ChatFacade {
     public interface SenderListener {
 
         /**
-         * Will be called when message from server received
+         * Will be called when system messages from server was received
          *
-         * @param jo message (see API description for details)
+         * @param arr message (see API description for details)
          */
-        void onData(JSONObject jo);
+        void onSysData(JSONArray arr);
+
+        /**
+         * Will be called when visible messages from server was received
+         *
+         * @param arr message (see API description for details)
+         */
+        void onChatData(JSONArray arr, String chatId, int unread, boolean more);
 
         /**
          * Will be called when registration in API will be finished

@@ -16,6 +16,7 @@ public class Comet extends Thread {
     private ChatDispatcher disp;
     private String lastSrvBatchId;
     public static int MAX_RETRY = 3;
+    private static final String SYS_CHAT = "@sys";
     private boolean isShort = false;
     private String id = UUID.randomUUID().toString().replace("-", "");
 
@@ -64,13 +65,6 @@ public class Comet extends Thread {
                 boolean checkResp = true;
                 try {
                     if (!disp.isConnStateOk() && Tool.checkServer(disp.getUrl(false))) disp.onConnected();
-//                    HttpClient client = HttpSigleton.getCometInstance(fullUrl, keyStore);
-//                    HttpResponse rr = client.execute(post);
-//                    if (rr.getStatusLine().getStatusCode() != 200) {
-//                        throw new Exception("HTTP CODE " + rr.getStatusLine().getStatusCode());
-//                    }
-//                    disp.onConnected();
-//                    r = 0;
                     String response = new Http().post(fullUrl, disp.getCompanyId(), jo.toString(), true);//Tool.getData(rr);
                     Log.v(ChatDispatcher.TAG, "<======== " + response + " (" + id + ")");
                     JSONObject rjo = new JSONObject(response);
@@ -86,12 +80,15 @@ public class Comet extends Thread {
                             lastSrvBatchId = rjo.optString("bi");
                         }
                         if (rjo.has("fs")) {
-                            JSONArray fs = rjo.optJSONArray("fs");
-                            Log.v(ChatDispatcher.TAG, "(" + id + ") fs != null: " + (fs != null) + ", fs size: " + (fs != null ? fs.length() : 0));
+                            JSONArray fs = rjo.getJSONArray("fs");
                             for (int i = 0; i < fs.length(); i++) {
                                 JSONObject fsj = fs.optJSONObject(i);
-                                Log.v(ChatDispatcher.TAG, "(" + id + ") onMessage: " + fsj);
-                                disp.onMessage(fsj);
+                                String chatId = fsj.optString("chatId");
+                                if (SYS_CHAT.equals(chatId)) {
+                                    disp.onSysMessages(fsj.optJSONArray("msgs"));
+                                } else {
+                                    disp.onChatMessages(fsj.optJSONArray("msgs"), chatId, fsj.optInt("unread"), fsj.optBoolean("more"));
+                                }
                             }
                             if (!isShort) sleep(500);
                         } else {
