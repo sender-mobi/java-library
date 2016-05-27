@@ -21,16 +21,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChatFacade {
 
     public static final String CLASS_TRACK_USER_ACTION = ".clientMonitoring.sender";
-    public static final String CLASS_TEXT_ROUTE = "text.routerobot.sender";
-    public static final String CLASS_FILE_ROUTE = "file.routerobot.sender";
-    public static final String CLASS_AUDIO_ROUTE = "audio.routerobot.sender";
-    public static final String CLASS_IMAGE_ROUTE = "image.routerobot.sender";
-    public static final String CLASS_VIDEO_ROUTE = ".videoMsg.sender";
-    public static final String CLASS_NTF_THEME = ".ntfTheme.sender";
+    public static final String CLASS_TEXT_ROUTE = "text";
+    public static final String CLASS_FILE_ROUTE = "file";
+    public static final String CLASS_AUDIO_ROUTE = "audio";
+    public static final String CLASS_IMAGE_ROUTE = "image";
+    public static final String CLASS_VIDEO_ROUTE = "video";
+    public static final String CLASS_NTF_THEME = "ntfTheme";
     public static final String CLASS_FORCE_OPEN = ".forceOpen.sender";
     public static final String CLASS_UPDATE_STORAGE = ".updateStorage.sender";
     public static final String CLASS_UPDATE_CHAT = ".updChat.sender";
-    public static final String CLASS_NTF_CHAT = ".ntfChat.sender";
+    public static final String CLASS_NTF_CHAT = "ntfChat";
     public static final String CLASS_UPATE_CHATUS_INFO = ".oStatusInfo.sender";
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
@@ -50,7 +50,7 @@ public class ChatFacade {
     public static final String CLASS_PUSH = "push.pushrobot.sender";
     public static final String CLASS_CHECK_ONLINE = ".checkUserStatus.sender";
     public static final String CLASS_SET_LOCATION = ".setDeviceLocation.sender";
-    public static final String CLASS_SHARE_LOCATION = ".shareMyLocation.sender";
+    public static final String CLASS_SHARE_LOCATION = "location";
     public static final String CLASS_WALLET = ".wallet.sender";
     public static final String CLASS_P2P = ".p2p.sender";
     public static final String CLASS_NOTIFY_ADD_YOU = "notify_add_you.chatrobot.sender";
@@ -60,7 +60,7 @@ public class ChatFacade {
     public static final String CLASS_AUTH_CONFIRM_OTHER = "confirm.auth.sender";
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
     public static final String CLASS_FINISH_AUTH = "finish.auth.sender";
-    public static final String CLASS_ALERT = ".alert.sender";
+    public static final String CLASS_ALERT = "alert";
     public static final String CLASS_ALERT_KICK = "kickass.alert.sender";
     public static final String CLASS_SET_CHAT_INFO = ".chatSetInfoForm.sender";
     public static final String CLASS_CHAT_INFO_NOTIFICATION = ".chatSetNotification.sender";
@@ -80,7 +80,7 @@ public class ChatFacade {
     public static final String CLASS_NOTIFICATION_LEAVE = ".leaveChatNotification.sender";
     public static final String CLASS_NOTIF_LEAVE = ".leaveChat.sender";
     public static final String CLASS_LEAVE_CHAT = ".leaveChat.sender";
-    public static final String CLASS_STICKER = ".sticker.sender";
+    public static final String CLASS_STICKER = "sticker";
     public static final String CLASS_DEVICES = ".devices.sender";
     public static final String CLASS_SEND_ESCALATION = ".reqEscalation.sender";
     public static final String CLASS_IS_ONLINE = ".areYouOnline.sender";
@@ -89,7 +89,7 @@ public class ChatFacade {
     public static final String CLASS_USER_STATE = ".userState.sender";
     public static final String CLASS_AUTH = ".authNative.sender";
     public static final String CLASS_GAME_WINNIE = ".winnieThePoohHoney.sender";
-    public static final String CLASS_VIBRO = ".vibro.sender";
+    public static final String CLASS_VIBRO = "vibro";
     public static final String CLASS_IP = ".ip.sender";
     public static final String CLASS_START_SYNC = ".startSyncCt.sender";
     public static final String CLASS_FULL_VERSION = ".fullVersion.sender";
@@ -99,7 +99,8 @@ public class ChatFacade {
     public static final String CLASS_CALL_CLOSE = ".callClose.sender";
     public static final String CLASS_SEND_PROXY = ".proxySend.sender";
     public static final String CLASS_GET_PROXY = ".proxy.sender";
-    public static final String CLASS_CHAT_KEY_SET = ".keyChat.sender";
+    public static final String CLASS_CHAT_KEY_SET = "keyChat";
+    public static final String CLASS_ENCRYPTED = "encrypted";
     public static final String AUTH_ACTION_PHONE = "phone";
     public static final String AUTH_ACTION_OTP = "otp";
     public static final String AUTH_ACTION_BREAK = "break";
