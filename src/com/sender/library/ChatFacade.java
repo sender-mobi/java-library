@@ -35,7 +35,7 @@ public class ChatFacade {
     public static final String CLASS_INFO_USER = ".getUserInfo.sender";
     public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
     public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
-    public static final String CLASS_TYPING_ROUTE = "typing.routerobot.sender";
+    public static final String CLASS_TYPING_ROUTE = "typing";
     public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
     public static final String CLASS_READ = ".read.sender";
     public static final String CLASS_DELIV = ".deliv.sender";
