@@ -20,42 +20,39 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ChatFacade {
 
-    public static final String CLASS_TRACK_USER_ACTION = ".clientMonitoring.sender";
+    public static final String CLASS_CLOSE_WIDGET = "closeWidget";
+    public static final String CLASS_READ = "read";
+    public static final String CLASS_O_CHAT_SET_THEME = "oChatSetTime";
+    public static final String CLASS_O_CHAT_DEL = "oChatDel";
+    public static final String CLASS_O_CHAT_SET = "oChatSet";
+    public static final String CLASS_O_CHAT_LIST = "oChatList";
+    public static final String CLASS_CHAT_SET_OPTION = "chatOptionsSet";
+    public static final String CLASS_GUEST = "guestOnSite";
+    public static final String CLASS_EVT2CLIENT = "eventToClient";
+    public static final String CLASS_WT_FORCE_OPEN = "wtForceOpen";
+    public static final String CLASS_GET_CURR_CHAT = "getCurrentChat";
+    public static final String CLASS_CHECK_STATUS = "checkStatus";
     public static final String CLASS_TEXT_ROUTE = "text";
     public static final String CLASS_FILE_ROUTE = "file";
     public static final String CLASS_AUDIO_ROUTE = "audio";
     public static final String CLASS_IMAGE_ROUTE = "image";
     public static final String CLASS_VIDEO_ROUTE = "video";
     public static final String CLASS_NTF_THEME = "ntfTheme";
-    public static final String CLASS_FORCE_OPEN = ".forceOpen.sender";
-    public static final String CLASS_UPDATE_STORAGE = ".updateStorage.sender";
-    public static final String CLASS_UPDATE_CHAT = ".updChat.sender";
+    public static final String CLASS_FORCE_OPEN = "forceOpen";
+    public static final String CLASS_UPDATE_STORAGE = "updateStorage";
+    public static final String CLASS_UPDATE_CHAT = "updChat";
     public static final String CLASS_NTF_CHAT = "ntfChat";
-    public static final String CLASS_UPATE_CHATUS_INFO = ".oStatusInfo.sender";
-    public static final String CLASS_INFO_USER = ".getUserInfo.sender";
-    public static final String CLASS_INFO_CHAT = "info.chatrobot.sender";
-    public static final String CLASS_UPDATE_CONTACT = "update.contactrobot.sender";
-    public static final String CLASS_TYPING_ROUTE = "typing";
-    public static final String CLASS_ADDUSER_NOTIFY = "adduser_notify.chatrobot.sender";
-    public static final String CLASS_READ = ".read.sender";
-    public static final String CLASS_DELIV = ".deliv.sender";
-    public static final String CLASS_IS_AUTH = "isauth.authrobot.sender";
-    public static final String CLASS_SYNC_CONTACT = ".contactSync.sender";
-    public static final String CLASS_SET_CT = ".setCt.sender";
-    public static final String CLASS_CONTACT_SET = ".contactSet.sender";
-    public static final String CLASS_UPDATE_CT = ".updateCt.sender";
-    public static final String CLASS_GET_SELF_INFO = ".getSelfInfo.sender";
-    public static final String CLASS_SET_SELF_INFO = ".setSelfInfo.sender";
-    public static final String CLASS_SET_CHAT = "set.chatrobot.sender";
-    public static final String CLASS_PUSH = "push.pushrobot.sender";
-    public static final String CLASS_CHECK_ONLINE = ".checkUserStatus.sender";
+    public static final String CLASS_UPATE_CHATUS_INFO = "oStatusInfo";
+    public static final String CLASS_TYPING = "typing";
+    public static final String CLASS_O_TYPING = "oTyping";
+    public static final String CLASS_SYNC_CONTACT = "contactSync";
+    public static final String CLASS_SET_CT = "setCt";
+    public static final String CLASS_GET_SELF_INFO = "getSelfInfo";
+    public static final String CLASS_CHECK_ONLINE = "checkUserStatus";
     public static final String CLASS_SET_LOCATION = ".setDeviceLocation.sender";
     public static final String CLASS_SHARE_LOCATION = "location";
     public static final String CLASS_WALLET = ".wallet.sender";
     public static final String CLASS_P2P = ".p2p.sender";
-    public static final String CLASS_NOTIFY_ADD_YOU = "notify_add_you.chatrobot.sender";
-    public static final String CLASS_NOTIFY_DEL_YOU = "notify_del_you.chatrobot.sender";
-    public static final String CLASS_NOTIFY_SET = "notify_set.chatrobot.sender";
     public static final String CLASS_AUTH_SUCCESS = "success.auth.sender";
     public static final String CLASS_AUTH_CONFIRM_OTHER = "confirm.auth.sender";
     public static final String CLASS_RECHARGE_PHONE = ".payMobile.sender";
@@ -73,31 +70,25 @@ public class ChatFacade {
     public static final String CLASS_SHOP = ".shop.sender";
     public static final String CLASS_CHESS = ".chess.sender";
     public static final String CLASS_QRCODE = ".qr.sender";
-    public static final String CLASS_NOTIFICATION_ADD = ".addChatNotification.sender";
-    public static final String CLASS_NOTIF_ADD = ".addChat.sender";
-    public static final String CLASS_NOTIFICATION_DEL = ".delChatNotification.sender";
-    public static final String CLASS_NOTIF_DEL = ".delChat.sender";
-    public static final String CLASS_NOTIFICATION_LEAVE = ".leaveChatNotification.sender";
-    public static final String CLASS_NOTIF_LEAVE = ".leaveChat.sender";
     public static final String CLASS_LEAVE_CHAT = ".leaveChat.sender";
     public static final String CLASS_STICKER = "sticker";
     public static final String CLASS_DEVICES = ".devices.sender";
     public static final String CLASS_SEND_ESCALATION = ".reqEscalation.sender";
     public static final String CLASS_IS_ONLINE = ".areYouOnline.sender";
     public static final String CLASS_GAME_TTT = ".ticTacToe.sender";
-    public static final String CLASS_ADDUSER_OFFER = "offer.addCtByUserId.sender";
+    public static final String CLASS_ADDUSER_OFFER = "addCtByUserId";
     public static final String CLASS_USER_STATE = ".userState.sender";
-    public static final String CLASS_AUTH = ".authNative.sender";
+    public static final String CLASS_AUTH = "authNative";
     public static final String CLASS_GAME_WINNIE = ".winnieThePoohHoney.sender";
     public static final String CLASS_VIBRO = "vibro";
-    public static final String CLASS_IP = ".ip.sender";
-    public static final String CLASS_START_SYNC = ".startSyncCt.sender";
-    public static final String CLASS_FULL_VERSION = ".fullVersion.sender";
+    public static final String CLASS_IP = "ip";
+    public static final String CLASS_START_SYNC = "startSyncCt";
+    public static final String CLASS_FULL_VERSION = "fullVersion";
     public static final String CLASS_CALL_RING = ".callRing.sender";
-    public static final String CLASS_CALL_STATE = ".callState.sender";
+    public static final String CLASS_CALL_STATE = "callState";
     public static final String CLASS_CALL_RUN = ".callRun.sender";
     public static final String CLASS_CALL_CLOSE = ".callClose.sender";
-    public static final String CLASS_SEND_PROXY = ".proxySend.sender";
+    public static final String CLASS_SEND_PROXY = "proxySend";
     public static final String CLASS_GET_PROXY = ".proxy.sender";
     public static final String CLASS_CHAT_KEY_SET = "keyChat";
     public static final String CLASS_ENCRYPTED = "encrypted";
@@ -1402,15 +1393,23 @@ public class ChatFacade {
      * @param chatId id of chat
      * @param jrl    connection listener
      */
-    public void getHistory(final String chatId, String lastPacketId, final JsonRespListener jrl) {
+    public void getHistory(final String chatId, final JsonRespListener jrl) {
+        getHistory(chatId, null, null, jrl);
+    }
+
+    /**
+     * Get history of chat
+     * @param bothId bottom of history hole
+     * @param topId top of history hole
+     * @param chatId id of chat
+     * @param jrl    connection listener
+     */
+    public void getHistory(final String chatId, String bothId, String topId, final JsonRespListener jrl) {
         try {
             final JSONObject rjo = new JSONObject();
-            if (lastPacketId != null && !lastPacketId.isEmpty())
-                rjo.put("id", lastPacketId);
-            else {
-                rjo.put("pos", 0);
-                rjo.put("size", 50);
-            }
+            if (bothId != null && !bothId.isEmpty()) rjo.put("startId", Integer.parseInt(bothId));
+            if (topId != null && !topId.isEmpty()) rjo.put("endId", Integer.parseInt(topId));
+            rjo.put("size", 50);
             rjo.put("chatId", chatId);
             cc.sendSync("history", rjo, new SenderRequest.HttpDataListener() {
                 @Override
@@ -1551,15 +1550,13 @@ public class ChatFacade {
      * Send message read
      *
      * @param packetId packet id
-     * @param from     message from id
      * @param chatId   chat id
      * @param rrl      connection response listener
      */
-    public void sendRead(final String packetId, String from, final String chatId, final JsonRespListener rrl) {
+    public void sendRead(final String packetId, final String chatId, final JsonRespListener rrl) {
         try {
             JSONObject model = new JSONObject();
             model.put("packetId", packetId);
-            model.put("from", from);
             final JSONObject form2Send = getForm2Send(model, CLASS_READ, chatId);
             cc.send(new SenderRequest(URL_FORM, form2Send, new SenderRequest.HttpDataListener() {
                 @Override
@@ -1916,15 +1913,7 @@ public class ChatFacade {
             if (model != null) rez.put("model", model);
             if (chatId != null) rez.put("chatId", chatId);
             if (procId != null) rez.put("procId", procId);
-            if (formClass != null) {
-                rez.put("class", formClass);
-                String[] ss = formClass.split("\\.");
-                if (ss.length == 3) {
-                    rez.put("formId", ss[0]);
-                    rez.put("robotId", ss[1]);
-                    rez.put("companyId", ss[2]);
-                }
-            }
+            if (formClass != null) rez.put("class", formClass);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -2332,7 +2321,7 @@ public class ChatFacade {
          *
          * @param arr message (see API description for details)
          */
-        void onChatData(JSONArray arr, String chatId, int unread, boolean more);
+        void onChatData(JSONArray arr, String chatId, int unread, boolean more, String status);
 
         /**
          * Will be called when registration in API will be finished

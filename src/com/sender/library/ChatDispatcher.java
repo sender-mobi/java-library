@@ -156,8 +156,8 @@ public class ChatDispatcher {
         sml.onNeedUpdate();
     }
 
-    public void onChatMessages(JSONArray arr, String chatId, int unread, boolean more) {
-        sml.onChatData(arr, chatId, unread, more);
+    public void onChatMessages(JSONArray arr, String chatId, int unread, boolean more, String st) {
+        sml.onChatData(arr, chatId, unread, more, st);
     }
 
     public void onSysMessages(JSONArray arr) {

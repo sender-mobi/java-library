@@ -87,7 +87,7 @@ public class Comet extends Thread {
                                 if (SYS_CHAT.equals(chatId)) {
                                     disp.onSysMessages(fsj.optJSONArray("msgs"));
                                 } else {
-                                    disp.onChatMessages(fsj.optJSONArray("msgs"), chatId, fsj.optInt("unread"), fsj.optBoolean("more"));
+                                    disp.onChatMessages(fsj.optJSONArray("msgs"), chatId, fsj.optInt("unread"), fsj.optBoolean("more"), fsj.optString("status"));
                                 }
                             }
                             if (!isShort) sleep(500);
