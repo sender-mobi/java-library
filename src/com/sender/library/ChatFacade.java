@@ -1524,6 +1524,31 @@ public class ChatFacade {
 
     }
 
+    public void setChatOptions(String chatId, boolean favorite, boolean block, boolean mute) {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("id", chatId);
+            data.put("block", block);
+            data.put("fav", favorite);
+            data.put("snd", "0");
+            JSONObject ntf = new JSONObject().put("m", mute ? "all" : "off").put("h", "off").put("s", "off").put("t", "off").put("c", "off");
+            data.put("ntf", ntf);
+            cc.sendSync("chat_options_set", data, new SenderRequest.HttpDataListener() {
+                @Override
+                public void onResponse(JSONObject data) {
+
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void getCompanySnippets(String companyId, final JsonRespListener respListener) {
         try {
             JSONObject data = new JSONObject();

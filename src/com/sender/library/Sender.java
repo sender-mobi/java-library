@@ -33,6 +33,7 @@ public class Sender {
     public void send(SenderRequest sr) {
         try {
             if (ChatFacade.URL_FORM.equalsIgnoreCase(sr.getRequestURL()) && sr.getPostData() != null) {
+                delDuplicates(sr);
                 packQueue.put(sr);
                 Log.v(ChatDispatcher.TAG, "added to queue: " + sr);
             } else {
@@ -48,6 +49,22 @@ public class Sender {
             timer.schedule(new SendTask(), 0, 1000);
         } else {
             Log.v(ChatDispatcher.TAG, "sender is running...");
+        }
+    }
+
+    private void delDuplicates(SenderRequest sr) {
+        JSONObject jo = sr.getPostData();
+        if (jo == null) return;
+        String className = jo.optString("class");
+        String chatId = jo.optString("chatId");
+        if (ChatFacade.CLASS_READ.equals(className)) {
+            for(SenderRequest r : packQueue) {
+                JSONObject rjo = r.getPostData();
+                if (rjo == null) continue;
+                if (className.equals(rjo.optString("class")) && chatId.equals(rjo.optString("chatId"))) {
+                    packQueue.remove(r);
+                }
+            }
         }
     }
     
