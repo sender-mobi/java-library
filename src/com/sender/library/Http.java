@@ -45,7 +45,7 @@ public class Http {
             conn = (HttpsURLConnection) a.openConnection();
             conn.setDoInput(true);
             conn.setConnectTimeout(2000);
-            conn.setReadTimeout(isComet ? 50000 : 10000);
+            conn.setReadTimeout(isComet ? 65000 : 10000);
             if (data != null) {
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
